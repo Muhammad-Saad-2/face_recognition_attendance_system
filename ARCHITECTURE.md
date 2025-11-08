@@ -74,10 +74,11 @@ Below is the **step-by-step explanation** of how the system works — written si
 ### 📁 Step 3: Excel File Generation
 - The attendance Excel file (`attendance.xlsx`) looks like this:
 
-| Name | Date | Time |
-|------|------|------|
-| Muhammad Saad | 2025-11-08 | 09:31:22 |
-| Ali Ahmed | 2025-11-08 | 09:31:22 |
+| Name | status | Date | Time |
+|------|--------|------|------|
+
+| Muhammad Muneeb | present | 2025-11-08 | 09:31:22 | 
+| Ali Ahmed | present | 2025-11-08 | 09:31:22 |
 
 - Each time a group photo is sent, new entries are automatically appended.
 
@@ -174,7 +175,7 @@ Below is the **step-by-step explanation** of how the system works — written si
 
 ## ✅ Final Takeaway
 This project provides a **complete end-to-end working system** for face-based attendance without needing a complex database or cloud services.  
-It’s simple, understandable, and demonstrates strong technical integration between **AI, backend APIs, and a mobile app interface** — perfectly suitable for an FYP.
+It’s simple, understandable, and demonstrates strong technical integration between **AI, backend APIs, and a mobile app interface**
 
 
 

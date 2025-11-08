@@ -124,25 +124,9 @@ Below is the **step-by-step explanation** of how the system works — written si
 
 ---
 
-## 📦 Project Folder Structure (Backend)
+## Visual Representation of the workflow on the Upper Level
 
-face_recognition_attendance/
-│
-├── **main.py** # FastAPI entry point
-├── **requirements.txt** # Project dependencies
-├── **utils/**
-│   ├── **face_utils.py** # Functions for encoding and comparison
-│   └── **excel_utils.py** # Functions for Excel handling
-│
-├── **data/**
-│   ├── **encodings.pkl** # Stored face data
-│   └── **attendance.xlsx** # Attendance record file
-│
-└── **images/**
-    ├── **registered/** # Student face samples
-    └── **group_photos/** # Attendance group photos
-
-
+<img title = "workflow" src="./images/face_recignizer.png" width="800" >
 
 ---
 
@@ -181,10 +165,8 @@ face_recognition_attendance/
 
 | Feature | Status |
 |----------|--------|
-| Database | ❌ Not used (Excel only) |
 | Real-time updates | ✅ Yes |
 | Multi-face detection | ✅ Supported |
-| Offline support | ⚠️ Not priority |
 | Platform | ✅ Android (via Flutter app) |
 | Backend | ✅ FastAPI + OpenCV |
 

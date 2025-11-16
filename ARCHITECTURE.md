@@ -178,20 +178,3 @@ This project provides a **complete end-to-end working system** for face-based at
 It’s simple, understandable, and demonstrates strong technical integration between **AI, backend APIs, and a mobile app interface**
 
 
-
-<<<<<<< HEAD
-=======
-
-## The dedicated project structure to be followed
-
-app/
-├── android/            # Android-specific configuration/native code
-├── ios/                # iOS-specific configuration/native code
-├── lib/                # Your Dart source code goes here (frontend logic)
-├── test/               # Unit and widget tests
-├── web/                # Web-specific files if targeting the web
-├── pubspec.yaml        # Project dependencies and metadata
-├── pubspec.lock        # Automatically generated file (don't edit)
-├── README.md           # Project description
-└── ... (other config files like analysis_options.yaml)
->>>>>>> b8b4aac (flutter setup)

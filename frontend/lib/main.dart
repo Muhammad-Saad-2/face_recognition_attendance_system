@@ -1,396 +1,423 @@
-// import 'package:flutter/material.dart';
-
-// void main() {
-//   runApp(const MyApp());
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-
-//   // This widget is the root of your application.
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       title: 'Flutter Demo',
-//       theme: ThemeData(
-//         // This is the theme of your application.
-//         //
-//         // TRY THIS: Try running your application with "flutter run". You'll see
-//         // the application has a purple toolbar. Then, without quitting the app,
-//         // try changing the seedColor in the colorScheme below to Colors.green
-//         // and then invoke "hot reload" (save your changes or press the "hot
-//         // reload" button in a Flutter-supported IDE, or press "r" if you used
-//         // the command line to start the app).
-//         //
-//         // Notice that the counter didn't reset back to zero; the application
-//         // state is not lost during the reload. To reset the state, use hot
-//         // restart instead.
-//         //
-//         // This works for code too, not just values: Most code changes can be
-//         // tested with just a hot reload.
-//         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-//       ),
-//       home: const MyHomePage(title: 'Flutter Demo Home Page'),
-//     );
-//   }
-// }
-
-// class MyHomePage extends StatefulWidget {
-//   const MyHomePage({super.key, required this.title});
-
-//   // This widget is the home page of your application. It is stateful, meaning
-//   // that it has a State object (defined below) that contains fields that affect
-//   // how it looks.
-
-//   // This class is the configuration for the state. It holds the values (in this
-//   // case the title) provided by the parent (in this case the App widget) and
-//   // used by the build method of the State. Fields in a Widget subclass are
-//   // always marked "final".
-
-//   final String title;
-
-//   @override
-//   State<MyHomePage> createState() => _MyHomePageState();
-// }
-
-// class _MyHomePageState extends State<MyHomePage> {
-//   int _counter = 0;
-
-//   void _incrementCounter() {
-//     setState(() {
-//       // This call to setState tells the Flutter framework that something has
-//       // changed in this State, which causes it to rerun the build method below
-//       // so that the display can reflect the updated values. If we changed
-//       // _counter without calling setState(), then the build method would not be
-//       // called again, and so nothing would appear to happen.
-//       _counter++;
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     // This method is rerun every time setState is called, for instance as done
-//     // by the _incrementCounter method above.
-//     //
-//     // The Flutter framework has been optimized to make rerunning build methods
-//     // fast, so that you can just rebuild anything that needs updating rather
-//     // than having to individually change instances of widgets.
-//     return Scaffold(
-//       appBar: AppBar(
-//         // TRY THIS: Try changing the color here to a specific color (to
-//         // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-//         // change color while the other colors stay the same.
-//         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-//         // Here we take the value from the MyHomePage object that was created by
-//         // the App.build method, and use it to set our appbar title.
-//         title: Text(widget.title),
-//       ),
-//       body: Center(
-//         // Center is a layout widget. It takes a single child and positions it
-//         // in the middle of the parent.
-//         child: Column(
-//           // Column is also a layout widget. It takes a list of children and
-//           // arranges them vertically. By default, it sizes itself to fit its
-//           // children horizontally, and tries to be as tall as its parent.
-//           //
-//           // Column has various properties to control how it sizes itself and
-//           // how it positions its children. Here we use mainAxisAlignment to
-//           // center the children vertically; the main axis here is the vertical
-//           // axis because Columns are vertical (the cross axis would be
-//           // horizontal).
-//           //
-//           // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-//           // action in the IDE, or press "p" in the console), to see the
-//           // wireframe for each widget.
-//           mainAxisAlignment: .center,
-//           children: [
-//             const Text('You have pushed the button this many times:'),
-//             Text(
-//               '$_counter',
-//               style: Theme.of(context).textTheme.headlineMedium,
-//             ),
-//           ],
-//         ),
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: _incrementCounter,
-//         tooltip: 'Increment',
-//         child: const Icon(Icons.add),
-//       ),
-//     );
-//   }
-// }
-
-import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'api_service.dart';
 
-// 1. GLOBAL VARIABLE: This will hold the list of available cameras.
 late List<CameraDescription> cameras;
 
-// 2. MAIN FUNCTION: Ensures Flutter is ready and finds the available cameras
-// before running the app. This is crucial for hardware access.
 Future<void> main() async {
-  // You need to call WidgetsFlutterBinding.ensureInitialized() before calling
-  // any Flutter-specific methods (like availableCameras()) in main().
   WidgetsFlutterBinding.ensureInitialized();
-
   try {
-    // Await the list of available cameras (front, back, etc.).
     cameras = await availableCameras();
   } on CameraException catch (e) {
-    // Print any errors if the cameras couldn't be fetched.
     print('Error fetching cameras: $e');
     cameras = [];
   }
-
-  // Run the main application widget.
-  runApp(const CameraApp());
+  runApp(const MyApp());
 }
 
-class CameraApp extends StatelessWidget {
-  const CameraApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Camera Demo',
-      theme: ThemeData(primarySwatch: Colors.blueGrey, useMaterial3: true),
-      // Check if we found any cameras. If not, show an error screen.
-      home: cameras.isEmpty
-          ? const NoCameraScreen()
-          : TakePictureScreen(camera: cameras.first),
+      title: 'Face Attendance',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      home: const HomeScreen(),
     );
   }
 }
 
-class NoCameraScreen extends StatelessWidget {
-  const NoCameraScreen({super.key});
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Camera App')),
-      body: const Center(
-        child: Text(
-          'No camera available on this device or emulator.',
-          style: TextStyle(fontSize: 18, color: Colors.red),
+      appBar: AppBar(title: const Text('Face Attendance System')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                if (cameras.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const RegistrationScreen()),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No camera available')),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20)),
+              child: const Text('Register Student', style: TextStyle(fontSize: 20)),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                if (cameras.isNotEmpty) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AttendanceScreen()),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('No camera available')),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20)),
+              child: const Text('Mark Attendance', style: TextStyle(fontSize: 20)),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// 3. MAIN WIDGET: Displays the live camera feed and capture button.
-class TakePictureScreen extends StatefulWidget {
-  final CameraDescription camera;
-
-  const TakePictureScreen({super.key, required this.camera});
+class RegistrationScreen extends StatefulWidget {
+  const RegistrationScreen({super.key});
 
   @override
-  TakePictureScreenState createState() => TakePictureScreenState();
+  State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class TakePictureScreenState extends State<TakePictureScreen> {
-  late CameraController _controller;
-  late Future<void> _initializeControllerFuture;
-
-  // XFile is the format for a captured file in Flutter plugins.
-  XFile? _capturedImage;
+class _RegistrationScreenState extends State<RegistrationScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _idController = TextEditingController();
+  final _programController = TextEditingController();
+  final _majorController = TextEditingController();
+  
+  List<XFile> _capturedImages = [];
+  late CameraController _cameraController;
+  bool _isCameraInitialized = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    // To display the current output from the camera,
-    // create a CameraController.
-    _controller = CameraController(
-      // Get a specific camera from the list of available cameras.
-      widget.camera,
-      // Define the resolution to use. High resolution is good for face recognition.
-      ResolutionPreset.max,
-      enableAudio: false, // We only need the image for face recognition
-    );
+    _initializeCamera();
+  }
 
-    // Next, initialize the controller. This returns a Future.
-    _initializeControllerFuture = _controller.initialize().catchError((e) {
-      // Handle camera initialization errors (e.g., permissions denied).
-      if (e is CameraException) {
-        print('Camera init error: ${e.code} - ${e.description}');
-        // Optionally show a dialog or message here
-      } else {
-        print('An unknown error occurred during camera initialization: $e');
-      }
-    });
+  Future<void> _initializeCamera() async {
+    _cameraController = CameraController(
+      cameras.first,
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
+    await _cameraController.initialize();
+    if (mounted) {
+      setState(() {
+        _isCameraInitialized = true;
+      });
+    }
   }
 
   @override
   void dispose() {
-    // Dispose of the controller when the widget is disposed.
-    _controller.dispose();
+    _cameraController.dispose();
+    _nameController.dispose();
+    _idController.dispose();
+    _programController.dispose();
+    _majorController.dispose();
     super.dispose();
   }
 
-  // Function to capture the image.
   Future<void> _captureImage() async {
-    // Check if the controller is initialized and ready.
-    if (!_controller.value.isInitialized) {
-      return;
-    }
-
+    if (!_isCameraInitialized) return;
     try {
-      // Ensure the camera is initialized before taking a picture.
-      await _initializeControllerFuture;
-
-      // Attempt to take a picture and get the file `XFile`.
-      final image = await _controller.takePicture();
-
-      // Update the state to display the captured image.
+      final image = await _cameraController.takePicture();
       setState(() {
-        _capturedImage = image;
+        _capturedImages.add(image);
       });
-
-      // In a real app, you would send this 'image' file to your Python
-      // face recognition backend here! (Using Dart's http client).
-      print('Picture saved to: ${image.path}');
     } catch (e) {
       print(e);
     }
   }
 
-  // Function to switch back to the camera preview.
-  void _retakePicture() {
-    setState(() {
-      _capturedImage = null;
-    });
+  Future<void> _submitRegistration() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_capturedImages.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please capture at least 3 photos')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final api = ApiService();
+      final response = await api.registerStudent(
+        name: _nameController.text,
+        studentId: _idController.text,
+        program: _programController.text,
+        major: _majorController.text,
+        images: _capturedImages,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['message'] ?? 'Registration successful')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Camera Preview'),
-        backgroundColor: Colors.blueGrey,
-      ),
-      body: FutureBuilder<void>(
-        future: _initializeControllerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done &&
-              _controller.value.isInitialized) {
-            // If the Future is complete and the controller is ready,
-            // show the camera preview or the captured image.
-            return _capturedImage == null
-                ? buildCameraPreview()
-                : buildCapturedImage(context);
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Camera Error: ${snapshot.error}',
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          } else {
-            // Otherwise, display a loading indicator.
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
-      // Floating action button for taking pictures, visible only during preview.
-      floatingActionButton: _capturedImage == null
-          ? FloatingActionButton(
-              onPressed: _captureImage,
-              backgroundColor: Colors.blueGrey.shade700,
-              child: const Icon(Icons.camera_alt, color: Colors.white),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    );
-  }
-
-  // Helper widget to display the camera feed, ensuring it fits the screen.
-  Widget buildCameraPreview() {
-    // AspectRatio ensures the preview maintains the camera's native aspect ratio.
-    final size = MediaQuery.of(context).size;
-    final scale = size.aspectRatio * _controller.value.aspectRatio;
-
-    // Scale the preview only if the aspect ratio is greater than 1
-    // (i.e., landscape mode on a portrait device).
-    return Center(
-      child: Transform.scale(
-        scale: scale < 1 ? 1 : scale,
-        child: AspectRatio(
-          aspectRatio: _controller.value.aspectRatio,
-          child: CameraPreview(_controller),
-        ),
-      ),
-    );
-  }
-
-  // Helper widget to display the captured image.
-  Widget buildCapturedImage(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Image.file(File(_capturedImage!.path), fit: BoxFit.cover),
-        Positioned(
-          bottom: 24,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      appBar: AppBar(title: const Text('Register Student')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Button to retake the photo
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: 'Full Name'),
+                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _idController,
+                decoration: const InputDecoration(labelText: 'Student ID'),
+                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _programController,
+                decoration: const InputDecoration(labelText: 'Program'),
+                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              ),
+              TextFormField(
+                controller: _majorController,
+                decoration: const InputDecoration(labelText: 'Major'),
+                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              ),
+              const SizedBox(height: 20),
+              const Text('Capture Photos (Min 3)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              if (_isCameraInitialized)
+                SizedBox(
+                  height: 300,
+                  child: CameraPreview(_cameraController),
+                )
+              else
+                const Center(child: CircularProgressIndicator()),
+              const SizedBox(height: 10),
               ElevatedButton.icon(
-                onPressed: _retakePicture,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retake'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade400,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
+                onPressed: _captureImage,
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Capture Photo'),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 100,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _capturedImages.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Stack(
+                        children: [
+                          Image.file(File(_capturedImages[index].path), width: 100, height: 100, fit: BoxFit.cover),
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: IconButton(
+                              icon: const Icon(Icons.close, color: Colors.red),
+                              onPressed: () {
+                                setState(() {
+                                  _capturedImages.removeAt(index);
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
-              // Button to confirm the photo (for future face recognition step)
-              ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Your next step for face recognition goes here.
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Image confirmed! Ready for face recognition analysis.',
-                      ),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.check),
-                label: const Text('Use Photo'),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : _submitRegistration,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade500,
+                  backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
+                child: _isSubmitting
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Register', style: TextStyle(fontSize: 18)),
               ),
             ],
           ),
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class AttendanceScreen extends StatefulWidget {
+  const AttendanceScreen({super.key});
+
+  @override
+  State<AttendanceScreen> createState() => _AttendanceScreenState();
+}
+
+class _AttendanceScreenState extends State<AttendanceScreen> {
+  late CameraController _cameraController;
+  bool _isCameraInitialized = false;
+  bool _isProcessing = false;
+  XFile? _capturedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCamera();
+  }
+
+  Future<void> _initializeCamera() async {
+    _cameraController = CameraController(
+      cameras.first,
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+    await _cameraController.initialize();
+    if (mounted) {
+      setState(() {
+        _isCameraInitialized = true;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _cameraController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _captureAndMarkAttendance() async {
+    if (!_isCameraInitialized) return;
+    
+    try {
+      final image = await _cameraController.takePicture();
+      setState(() {
+        _capturedImage = image;
+        _isProcessing = true;
+      });
+
+      final api = ApiService();
+      final response = await api.markAttendance(image);
+
+      if (mounted) {
+        _showResultDialog(response);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  void _showResultDialog(Map<String, dynamic> response) {
+    final recognizedCount = response['recognized_count'];
+    final students = response['students'] as List<dynamic>;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Attendance Marked ($recognizedCount)'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: students.length,
+            itemBuilder: (context, index) {
+              final s = students[index];
+              return ListTile(
+                leading: const Icon(Icons.check_circle, color: Colors.green),
+                title: Text(s['name']),
+                subtitle: Text('${s['student_id']} - ${s['program']}'),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _capturedImage = null;
+              });
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Mark Attendance')),
+      body: Column(
+        children: [
+          if (_isCameraInitialized)
+            Expanded(
+              child: _capturedImage == null
+                  ? CameraPreview(_cameraController)
+                  : Image.file(File(_capturedImage!.path), fit: BoxFit.cover),
+            )
+          else
+            const Expanded(child: Center(child: CircularProgressIndicator())),
+          
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isProcessing ? null : _captureAndMarkAttendance,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.camera),
+                label: _isProcessing
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Capture & Mark Attendance', style: TextStyle(fontSize: 18)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

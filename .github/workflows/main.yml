@@ -19,9 +19,11 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # 1. Configure git
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Action"
-          
-          # 2. Push only the 'backend' folder content to the HF space root
-          git subtree push --prefix backend https://saad-muhammad:$HF_TOKEN@huggingface.co/spaces/saad-muhammad/attendance-backend main --force
+
+          # 1. Isolate the backend folder into a temporary local branch called 'to-deploy'
+          git subtree split --prefix backend -b to-deploy
+
+          # 2. Force push ONLY that temporary branch to Hugging Face
+          git push https://saad-muhammad:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/saad-muhammad/attendance-backend to-deploy:main --force

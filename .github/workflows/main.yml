@@ -24,4 +24,4 @@ jobs:
           git config --global user.name "GitHub Action"
           
           # 2. Push only the 'backend' folder content to the HF space root
-          git push https://saad-muhammad:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/saad-muhammad/attendance-backend main --force
+          git subtree push --prefix backend https://saad-muhammad:$HF_TOKEN@huggingface.co/spaces/saad-muhammad/attendance-backend main --force

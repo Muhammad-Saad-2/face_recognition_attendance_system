@@ -22,8 +22,6 @@ jobs:
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Action"
 
-          # 1. Isolate the backend folder into a temporary local branch called 'to-deploy'
-          git subtree split --prefix backend -b to-deploy
+          # The "magic" command: split the backend folder and force-push it in one go
+          git push https://saad-muhammad:$HF_TOKEN@huggingface.co/spaces/saad-muhammad/attendance-backend `git subtree split --prefix backend main`:main --force
 
-          # 2. Force push ONLY that temporary branch to Hugging Face
-          git push https://saad-muhammad:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/saad-muhammad/attendance-backend to-deploy:main --force

@@ -1,36 +1,41 @@
-FROM python:3.12
+# Use a modern, stable Python base
+FROM python:3.12-slim
 
-# Install system dependencies for dlib and OpenCV
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=off \
+    PIP_DISABLE_PIP_VERSION_CHECK=on
+
+# Set working directory
+WORKDIR /app
+
+# Install only necessary system dependencies
+# We use libglib2.0-0 for opencv-python-headless
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
-    libopenblas-dev \
-    liblapack-dev \
-    libx11-6 \
-    libgl1 \
+    git \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Hugging Face runs containers as a non-root user (UID 1000)
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
+COPY . .
+
+# Hugging Face runs as user 1000
 RUN useradd -m -u 1000 user
 USER user
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 
-WORKDIR $HOME/app
-
-# Copy requirements and install
-# We use --chown=user to ensure the 'user' owns the files
-COPY --chown=user requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy all remaining files (encoding.pkl, app/, etc.)
-COPY --chown=user . .
-
-# Explicitly ensure the app can read/write in its directory
-RUN chmod -R 777 $HOME/app
-
-# Hugging Face default port
+# Expose the default HF Space port
 EXPOSE 7860
 
+# Start the application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]

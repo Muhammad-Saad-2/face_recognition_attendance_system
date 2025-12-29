@@ -28,7 +28,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# We uninstall opencv-python to force usage of opencv-python-headless
+# This prevents libGL.so.1 errors in headless environments
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip uninstall -y opencv-python || true
 
 # Pre-download the VGG-Face model to avoid timeout at runtime
 # This creates the weights file in /root/.deepface/weights/

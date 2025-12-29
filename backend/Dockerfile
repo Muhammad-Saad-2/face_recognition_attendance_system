@@ -49,7 +49,8 @@ RUN useradd -m -u 1000 user
 # DeepFace looks in ~/.deepface/weights
 RUN mkdir -p /home/user/.deepface/weights && \
     cp -r /root/.deepface/weights/* /home/user/.deepface/weights/ && \
-    chown -R user:user /home/user/.deepface
+    chown -R user:user /home/user/.deepface && \
+    chown -R user:user /app
 
 USER user
 ENV HOME=/home/user \

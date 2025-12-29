@@ -13,9 +13,11 @@ class Settings:
     
     # Database
     POSTGRESQL_URL: str = os.getenv("POSTGRESQL_URL")
+    if not POSTGRESQL_URL:
+        raise ValueError("POSTGRESQL_URL environment variable is not set")
+        
     if POSTGRESQL_URL and POSTGRESQL_URL.startswith("postgres://"):
         POSTGRESQL_URL = POSTGRESQL_URL.replace("postgres://", "postgresql://", 1)
-  
         
     # Files
     # Store data in a 'data' folder to keep root clean, or just in root as before

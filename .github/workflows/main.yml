@@ -22,7 +22,24 @@ jobs:
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Action"
 
-          # The "magic" command: split the backend folder and force-push it in one go
-          git push https://saad-muhammad:$HF_TOKEN@huggingface.co/spaces/saad-muhammad/Test_on_new_branch `git subtree split --prefix backend feature/deepface-migration`:main --force
+          # Create a fresh orphan branch to squash history
+          git checkout --orphan deploy-branch
+          
+          # Unstage and remove all files to start clean
+          git rm -rf .
+          
+          # Checkout only the backend folder from the original branch
+          git checkout ${{ github.sha }} -- backend/
+          
+          # Move all backend files to root (including hidden ones)
+          cp -r backend/. .
+          rm -rf backend
+          
+          # Add all files to the new commit
+          git add .
+          git commit -m "Deploy backend to Hugging Face (Squashed)"
+          
+          # Push the new root to Hugging Face
+          git push https://saad-muhammad:$HF_TOKEN@huggingface.co/spaces/saad-muhammad/Test_on_new_branch HEAD:main --force
 
  

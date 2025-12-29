@@ -30,8 +30,10 @@ COPY requirements.txt .
 # Install Python dependencies
 # We uninstall opencv-python to force usage of opencv-python-headless
 # This prevents libGL.so.1 errors in headless environments
+# We then re-install headless to ensure the cv2 module is present
 RUN pip install --no-cache-dir -r requirements.txt && \
-    pip uninstall -y opencv-python || true
+    pip uninstall -y opencv-python || true && \
+    pip install opencv-python-headless==4.10.0.84
 
 # Pre-download the VGG-Face model to avoid timeout at runtime
 # This creates the weights file in /root/.deepface/weights/

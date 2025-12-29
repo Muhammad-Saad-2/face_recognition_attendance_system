@@ -23,6 +23,6 @@ jobs:
           git config --global user.name "GitHub Action"
 
           # The "magic" command: split the backend folder and force-push it in one go
-          git push https://saad-muhammad:$HF_TOKEN@huggingface.co/spaces/saad-muhammad/saad-muhammad/Test_on_new_branch `git subtree split --prefix backend feature/deepface-migration`:main --force
+          git push https://saad-muhammad:$HF_TOKEN@huggingface.co/spaces/saad-muhammad/Test_on_new_branch `git subtree split --prefix backend feature/deepface-migration`:main --force
 
  

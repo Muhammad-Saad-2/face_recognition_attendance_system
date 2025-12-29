@@ -1,9 +1,10 @@
-import face_recognition
 import pickle
 import os
 import shutil
+import numpy as np
 from typing import List, Dict
 from fastapi import UploadFile
+from deepface import DeepFace
 from app.core.config import settings
 
 class FaceRecognitionService:
@@ -29,6 +30,12 @@ class FaceRecognitionService:
         with open(self.encodings_file, "wb") as f:
             pickle.dump(encodings, f)
 
+    def find_cosine_distance(self, source_representation, test_representation):
+        a = np.matmul(np.transpose(source_representation), test_representation)
+        b = np.sum(np.multiply(source_representation, source_representation))
+        c = np.sum(np.multiply(test_representation, test_representation))
+        return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
+
     def process_student_images(self, student_id: str, images: List[UploadFile]) -> List:
         student_encodings = []
         student_images_dir = os.path.join(self.images_dir, student_id)
@@ -39,12 +46,21 @@ class FaceRecognitionService:
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(image.file, buffer)
             
-            # Load image for face recognition
-            img = face_recognition.load_image_file(file_path)
-            encs = face_recognition.face_encodings(img)
-            
-            if len(encs) > 0:
-                student_encodings.append(encs[0])
+            try:
+                # Use VGG-Face and opencv backend as requested
+                # enforce_detection=True ensures we only get valid faces
+                representations = DeepFace.represent(
+                    img_path=file_path,
+                    model_name="VGG-Face",
+                    detector_backend="opencv",
+                    enforce_detection=True
+                )
+                
+                for embedding_obj in representations:
+                    student_encodings.append(embedding_obj["embedding"])
+            except Exception as e:
+                print(f"Error processing image {file_path}: {e}")
+                continue
         
         return student_encodings
 
@@ -54,33 +70,42 @@ class FaceRecognitionService:
         self.save_encodings(known_encodings)
 
     def recognize_faces(self, image_path: str) -> List[str]:
-        unknown_image = face_recognition.load_image_file(image_path)
-        unknown_encodings = face_recognition.face_encodings(unknown_image)
+        try:
+            target_representations = DeepFace.represent(
+                img_path=image_path,
+                model_name="VGG-Face",
+                detector_backend="opencv",
+                enforce_detection=True
+            )
+        except Exception:
+            # No faces detected or other error
+            return []
         
-        if not unknown_encodings:
+        if not target_representations:
             return []
 
         known_encodings_dict = self.load_encodings()
-        known_faces = []
-        known_ids = []
-        
-        for s_id, encs in known_encodings_dict.items():
-            for enc in encs:
-                known_faces.append(enc)
-                known_ids.append(s_id)
-
-        if not known_faces:
-            return []
-
         recognized_ids = []
-        for unknown_encoding in unknown_encodings:
-            matches = face_recognition.compare_faces(known_faces, unknown_encoding, tolerance=0.5)
-            # face_distances = face_recognition.face_distance(known_faces, unknown_encoding)
+        
+        # Threshold for VGG-Face Cosine Distance
+        # 0.40 is the recommended threshold for VGG-Face
+        threshold = 0.40
+
+        for target_obj in target_representations:
+            target_embedding = target_obj["embedding"]
             
-            if True in matches:
-                first_match_index = matches.index(True)
-                student_id = known_ids[first_match_index]
-                if student_id not in recognized_ids:
-                    recognized_ids.append(student_id)
+            best_match_id = None
+            min_distance = 1000 # Initialize with high value
+            
+            for student_id, student_encodings in known_encodings_dict.items():
+                for known_embedding in student_encodings:
+                    distance = self.find_cosine_distance(known_embedding, target_embedding)
+                    
+                    if distance < threshold and distance < min_distance:
+                        min_distance = distance
+                        best_match_id = student_id
+            
+            if best_match_id and best_match_id not in recognized_ids:
+                recognized_ids.append(best_match_id)
                     
         return recognized_ids

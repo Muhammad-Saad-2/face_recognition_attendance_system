@@ -19,7 +19,7 @@ class Settings:
     # Files
     # Store data in a 'data' folder to keep root clean, or just in root as before
     # Using absolute paths ensures they work regardless of where uvicorn is run
-    ENCODINGS_FILE: str = str(BASE_DIR / "encodings.pkl")
+    ENCODINGS_FILE: str = str(BASE_DIR / "encodings_vgg.pkl")
     ATTENDANCE_FILE: str = str(BASE_DIR / "attendance.xlsx")
     IMAGES_DIR: str = str(BASE_DIR / "images")
 

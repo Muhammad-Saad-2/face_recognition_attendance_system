@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from fastapi.responses import FileResponse
 from sqlmodel import Session, select
 import shutil
 import os
@@ -52,3 +53,18 @@ async def mark_attendance(
         "recognized_count": len(recognized_students),
         "students": recognized_students
     }
+
+@router.get("/get_attendance_records")
+async def get_attendance_records():
+    try:
+        records = attendance_service.get_attendance_records()
+        return {"records": records}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching records: {str(e)}")
+
+@router.get("/download_attendance")
+async def download_attendance():
+    file_path = attendance_service.file_path
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Attendance file not found")
+    return FileResponse(file_path, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename="attendance.xlsx")

@@ -32,3 +32,25 @@ class AttendanceService:
         
         ws.append([student.name, student.student_id, student.program, student.major, date_str, time_str, "Present"])
         wb.save(self.file_path)
+
+    def get_attendance_records(self):
+        if not os.path.exists(self.file_path):
+            return []
+        
+        wb = openpyxl.load_workbook(self.file_path)
+        ws = wb.active
+        records = []
+        # Skip header row
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if row[0]:  # Ensure row has data
+                records.append({
+                    "name": row[0],
+                    "student_id": row[1],
+                    "program": row[2],
+                    "major": row[3],
+                    "date": row[4],
+                    "time": row[5],
+                    "status": row[6]
+                })
+        # Return reversed list to show newest first
+        return records[::-1]

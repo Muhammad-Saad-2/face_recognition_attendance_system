@@ -49,7 +49,13 @@ async def mark_attendance(
         
         if student:
             attendance_service.log_attendance(session, student)
-            recognized_students.append(student)
+            # Explicitly convert to dict to ensure serialization works
+            recognized_students.append({
+                "name": student.name,
+                "student_id": student.student_id,
+                "program": student.program,
+                "major": student.major
+            })
 
     return {
         "message": "Attendance marked",

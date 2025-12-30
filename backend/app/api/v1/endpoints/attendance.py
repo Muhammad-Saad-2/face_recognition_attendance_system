@@ -3,6 +3,8 @@ from fastapi.responses import FileResponse
 from sqlmodel import Session, select
 import shutil
 import os
+from openpyxl import Workbook
+from tempfile import NamedTemporaryFile
 from app.core.database import get_session
 from app.models.student import Student
 from app.services.face_recognition_service import FaceRecognitionService
@@ -46,7 +48,7 @@ async def mark_attendance(
         student = session.exec(statement).first()
         
         if student:
-            attendance_service.log_attendance(student)
+            attendance_service.log_attendance(session, student)
             recognized_students.append(student)
 
     return {
@@ -56,16 +58,42 @@ async def mark_attendance(
     }
 
 @router.get("/get_attendance_records")
-async def get_attendance_records():
+async def get_attendance_records(session: Session = Depends(get_session)):
     try:
-        records = attendance_service.get_attendance_records()
+        records = attendance_service.get_attendance_records(session)
         return {"records": records}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching records: {str(e)}")
 
 @router.get("/download_attendance")
-async def download_attendance():
-    file_path = attendance_service.file_path
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="Attendance file not found")
-    return FileResponse(file_path, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename="attendance.xlsx")
+async def download_attendance(session: Session = Depends(get_session)):
+    try:
+        records = attendance_service.get_attendance_records(session)
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Attendance"
+        ws.append(["Name", "Student ID", "Program", "Major", "Date", "Time", "Status"])
+        
+        for record in records:
+            ws.append([
+                record.name,
+                record.student_id,
+                record.program,
+                record.major,
+                record.date,
+                record.time,
+                record.status
+            ])
+            
+        with NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+            wb.save(tmp.name)
+            tmp_path = tmp.name
+            
+        return FileResponse(
+            tmp_path, 
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 
+            filename=f"attendance_report_{os.urandom(4).hex()}.xlsx"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")

@@ -13,71 +13,342 @@ Future<void> main() async {
     print('Error fetching cameras: $e');
     cameras = [];
   }
-  runApp(const MyApp());
+  runApp(const VerifaceApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class VerifaceApp extends StatelessWidget {
+  const VerifaceApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Face Attendance',
+      title: 'Veriface',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        brightness: Brightness.dark,
+        primaryColor: Colors.cyanAccent,
+        scaffoldBackgroundColor: const Color(0xFF050510),
+        colorScheme: const ColorScheme.dark(
+          primary: Colors.cyanAccent,
+          secondary: Colors.purpleAccent,
+          surface: Color(0xFF101020),
+        ),
         useMaterial3: true,
+        fontFamily: 'Roboto', // Default, can be changed if fonts are added
       ),
       home: const HomeScreen(),
     );
   }
 }
 
+// --- Custom Widgets ---
+
+class BackgroundScaffold extends StatelessWidget {
+  final Widget body;
+  final AppBar? appBar;
+
+  const BackgroundScaffold({super.key, required this.body, this.appBar});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: appBar != null
+          ? AppBar(
+              title: appBar!.title,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              titleTextStyle: const TextStyle(
+                color: Colors.cyanAccent,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(blurRadius: 10, color: Colors.cyan, offset: Offset(0, 0))
+                ],
+              ),
+              iconTheme: const IconThemeData(color: Colors.white),
+            )
+          : null,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF050510),
+              Color(0xFF100520),
+              Color(0xFF001020),
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // "Sparking" effect (simple glowing orbs)
+            Positioned(
+              top: -50,
+              left: -50,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.purpleAccent.withOpacity(0.2),
+                  boxShadow: [
+                    BoxShadow(blurRadius: 100, color: Colors.purpleAccent.withOpacity(0.3))
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -50,
+              right: -50,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.cyanAccent.withOpacity(0.2),
+                  boxShadow: [
+                    BoxShadow(blurRadius: 100, color: Colors.cyanAccent.withOpacity(0.3))
+                  ],
+                ),
+              ),
+            ),
+            SafeArea(child: body),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class GlowButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final String text;
+  final IconData? icon;
+  final Color color;
+
+  const GlowButton({
+    super.key,
+    required this.onPressed,
+    required this.text,
+    this.icon,
+    this.color = Colors.cyanAccent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.4),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black.withOpacity(0.6),
+          foregroundColor: color,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+            side: BorderSide(color: color.withOpacity(0.8), width: 2),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[Icon(icon), const SizedBox(width: 10)],
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(blurRadius: 10, color: color, offset: const Offset(0, 0))
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class GlassTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final String? Function(String?)? validator;
+
+  const GlassTextField({
+    super.key,
+    required this.controller,
+    required this.label,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: TextFormField(
+        controller: controller,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(color: Colors.white70),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.05),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Colors.cyanAccent),
+          ),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+}
+
+// --- Screens ---
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Face Attendance System')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                if (cameras.isNotEmpty) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const RegistrationScreen()),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No camera available')),
-                  );
+    return BackgroundScaffold(
+      body: Stack(
+        children: [
+          // Show Attendance Button (Top Right)
+          Positioned(
+            top: 20,
+            right: 20,
+            child: GlowButton(
+              onPressed: () async {
+                try {
+                  final api = ApiService();
+                  await api.downloadAttendance();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Attendance Report Downloaded!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               },
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20)),
-              child: const Text('Register Student', style: TextStyle(fontSize: 20)),
+              text: 'Show Attendance',
+              icon: Icons.table_chart,
+              color: Colors.purpleAccent,
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                if (cameras.isNotEmpty) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AttendanceScreen()),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('No camera available')),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20)),
-              child: const Text('Mark Attendance', style: TextStyle(fontSize: 20)),
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo
+                Container(
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.cyanAccent.withOpacity(0.5),
+                        blurRadius: 50,
+                        spreadRadius: 10,
+                      )
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/app_Logo.png',
+                      fit: BoxFit.cover,
+                      errorBuilder: (c, o, s) => const Icon(Icons.face, size: 80, color: Colors.white),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                // Title
+                const Text(
+                  'VERIFACE',
+                  style: TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 5,
+                    shadows: [
+                      Shadow(blurRadius: 20, color: Colors.cyanAccent, offset: Offset(0, 0)),
+                      Shadow(blurRadius: 40, color: Colors.blueAccent, offset: Offset(0, 0)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 50),
+                // Buttons
+                GlowButton(
+                  onPressed: () {
+                    if (cameras.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RegistrationScreen()),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No camera available')),
+                      );
+                    }
+                  },
+                  text: 'Register Student',
+                  icon: Icons.person_add,
+                ),
+                const SizedBox(height: 30),
+                GlowButton(
+                  onPressed: () {
+                    if (cameras.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AttendanceScreen()),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No camera available')),
+                      );
+                    }
+                  },
+                  text: 'Mark Attendance',
+                  icon: Icons.camera_alt,
+                  color: Colors.greenAccent,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -184,7 +455,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BackgroundScaffold(
       appBar: AppBar(title: const Text('Register Student')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -193,41 +464,52 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
+              GlassTextField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Full Name'),
+                label: 'Full Name',
                 validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
               ),
-              TextFormField(
+              GlassTextField(
                 controller: _idController,
-                decoration: const InputDecoration(labelText: 'Student ID'),
+                label: 'Student ID',
                 validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
               ),
-              TextFormField(
+              GlassTextField(
                 controller: _programController,
-                decoration: const InputDecoration(labelText: 'Program'),
+                label: 'Program',
                 validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
               ),
-              TextFormField(
+              GlassTextField(
                 controller: _majorController,
-                decoration: const InputDecoration(labelText: 'Major'),
+                label: 'Major',
                 validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
               ),
               const SizedBox(height: 20),
-              const Text('Capture Photos (Min 3)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const Text('Capture Photos (Min 3)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
               const SizedBox(height: 10),
               if (_isCameraInitialized)
-                SizedBox(
+                Container(
                   height: 300,
-                  child: CameraPreview(_cameraController),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.cyanAccent, width: 2),
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [BoxShadow(color: Colors.cyanAccent.withOpacity(0.2), blurRadius: 10)],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CameraPreview(_cameraController),
+                  ),
                 )
               else
                 const Center(child: CircularProgressIndicator()),
               const SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: _captureImage,
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Capture Photo'),
+              Center(
+                child: GlowButton(
+                  onPressed: _captureImage,
+                  text: 'Capture Photo',
+                  icon: Icons.camera,
+                  color: Colors.purpleAccent,
+                ),
               ),
               const SizedBox(height: 10),
               SizedBox(
@@ -240,17 +522,29 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       padding: const EdgeInsets.only(right: 8.0),
                       child: Stack(
                         children: [
-                          Image.file(File(_capturedImages[index].path), width: 100, height: 100, fit: BoxFit.cover),
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.white54),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(File(_capturedImages[index].path), width: 100, height: 100, fit: BoxFit.cover),
+                            ),
+                          ),
                           Positioned(
                             right: 0,
                             top: 0,
-                            child: IconButton(
-                              icon: const Icon(Icons.close, color: Colors.red),
-                              onPressed: () {
+                            child: GestureDetector(
+                              onTap: () {
                                 setState(() {
                                   _capturedImages.removeAt(index);
                                 });
                               },
+                              child: Container(
+                                color: Colors.black54,
+                                child: const Icon(Icons.close, color: Colors.red),
+                              ),
                             ),
                           ),
                         ],
@@ -259,18 +553,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitRegistration,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                ),
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Register', style: TextStyle(fontSize: 18)),
-              ),
+              const SizedBox(height: 30),
+              _isSubmitting
+                  ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+                  : GlowButton(
+                      onPressed: _submitRegistration,
+                      text: 'Register',
+                      icon: Icons.check_circle,
+                    ),
             ],
           ),
         ),
@@ -352,7 +642,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Attendance Marked ($recognizedCount)'),
+        backgroundColor: const Color(0xFF101020),
+        title: Text('Attendance Marked ($recognizedCount)', style: const TextStyle(color: Colors.cyanAccent)),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -361,9 +652,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             itemBuilder: (context, index) {
               final s = students[index];
               return ListTile(
-                leading: const Icon(Icons.check_circle, color: Colors.green),
-                title: Text(s['name']),
-                subtitle: Text('${s['student_id']} - ${s['program']}'),
+                leading: const Icon(Icons.check_circle, color: Colors.greenAccent),
+                title: Text(s['name'], style: const TextStyle(color: Colors.white)),
+                subtitle: Text('${s['student_id']} - ${s['program']}', style: const TextStyle(color: Colors.white70)),
               );
             },
           ),
@@ -376,7 +667,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 _capturedImage = null;
               });
             },
-            child: const Text('OK'),
+            child: const Text('OK', style: TextStyle(color: Colors.cyanAccent)),
           ),
         ],
       ),
@@ -385,35 +676,42 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BackgroundScaffold(
       appBar: AppBar(title: const Text('Mark Attendance')),
       body: Column(
         children: [
           if (_isCameraInitialized)
             Expanded(
-              child: _capturedImage == null
-                  ? CameraPreview(_cameraController)
-                  : Image.file(File(_capturedImage!.path), fit: BoxFit.cover),
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.cyanAccent, width: 2),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(color: Colors.cyanAccent.withOpacity(0.2), blurRadius: 20)],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: _capturedImage == null
+                      ? CameraPreview(_cameraController)
+                      : Image.file(File(_capturedImage!.path), fit: BoxFit.cover),
+                ),
+              ),
             )
           else
             const Expanded(child: Center(child: CircularProgressIndicator())),
           
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(30),
             child: SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isProcessing ? null : _captureAndMarkAttendance,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.camera),
-                label: _isProcessing
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Capture & Mark Attendance', style: TextStyle(fontSize: 18)),
-              ),
+              child: _isProcessing
+                  ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+                  : GlowButton(
+                      onPressed: _captureAndMarkAttendance,
+                      text: 'Capture & Mark',
+                      icon: Icons.camera_enhance,
+                      color: Colors.greenAccent,
+                    ),
             ),
           ),
         ],

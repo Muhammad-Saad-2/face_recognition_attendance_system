@@ -8,6 +8,7 @@ from app.models.student import Student
 from app.services.face_recognition_service import FaceRecognitionService
 from app.services.attendance_service import AttendanceService
 
+
 router = APIRouter()
 face_service = FaceRecognitionService()
 attendance_service = AttendanceService()

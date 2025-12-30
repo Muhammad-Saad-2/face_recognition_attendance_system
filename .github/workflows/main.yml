@@ -40,6 +40,6 @@ jobs:
           git commit -m "Deploy backend to Hugging Face (Squashed)"
           
           # Push the new root to Hugging Face
-          git push https://saad-muhammad:$HF_TOKEN@huggingface.co/spaces/saad-muhammad/Test_on_new_branch HEAD:main --force
+          git push https://saad-muhammad:$HF_TOKEN@huggingface.co/spaces/saad-muhammad/attendance-backend HEAD:main --force
 
  

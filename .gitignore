@@ -46,3 +46,7 @@ app.*.map.json
 
 /backend/.env
 /backend/images/
+
+/frontend/assets
+/frontend/build
+/frontend/ios/

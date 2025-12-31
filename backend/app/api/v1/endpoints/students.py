@@ -32,13 +32,10 @@ async def register_student(
     if not student_encodings:
         raise HTTPException(status_code=400, detail="No faces detected in uploaded images")
 
-    # Save encodings
-    face_service.add_student_encodings(student_id, student_encodings)
-
-    # 3. Save to DB
+    # 3. Create Student Object
     new_student = Student(name=name, student_id=student_id, program=program, major=major)
-    session.add(new_student)
-    session.commit()
-    session.refresh(new_student)
+
+    # 4. Save encodings and student to DB
+    face_service.add_student_encodings(session, new_student, student_encodings)
 
     return {"message": "Student registered successfully", "student": new_student}

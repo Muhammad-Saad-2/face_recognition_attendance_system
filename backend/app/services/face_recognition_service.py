@@ -1,34 +1,17 @@
-import pickle
 import os
 import shutil
 import numpy as np
 from typing import List, Dict
 from fastapi import UploadFile
 from deepface import DeepFace
+from sqlmodel import Session, select
 from app.core.config import settings
+from app.models.student import Student
 
 class FaceRecognitionService:
     def __init__(self):
-        self.encodings_file = settings.ENCODINGS_FILE
         self.images_dir = settings.IMAGES_DIR
-        self._ensure_files()
-
-    def _ensure_files(self):
         os.makedirs(self.images_dir, exist_ok=True)
-        if not os.path.exists(self.encodings_file):
-            with open(self.encodings_file, "wb") as f:
-                pickle.dump({}, f)
-
-    def load_encodings(self) -> Dict:
-        try:
-            with open(self.encodings_file, "rb") as f:
-                return pickle.load(f)
-        except (FileNotFoundError, EOFError):
-            return {}
-
-    def save_encodings(self, encodings: Dict):
-        with open(self.encodings_file, "wb") as f:
-            pickle.dump(encodings, f)
 
     def find_cosine_distance(self, source_representation, test_representation):
         a = np.matmul(np.transpose(source_representation), test_representation)
@@ -36,7 +19,7 @@ class FaceRecognitionService:
         c = np.sum(np.multiply(test_representation, test_representation))
         return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
 
-    def process_student_images(self, student_id: str, images: List[UploadFile]) -> List:
+    def process_student_images(self, student_id: str, images: List[UploadFile]) -> List[List[float]]:
         student_encodings = []
         student_images_dir = os.path.join(self.images_dir, student_id)
         os.makedirs(student_images_dir, exist_ok=True)
@@ -64,12 +47,13 @@ class FaceRecognitionService:
         
         return student_encodings
 
-    def add_student_encodings(self, student_id: str, encodings: List):
-        known_encodings = self.load_encodings()
-        known_encodings[student_id] = encodings
-        self.save_encodings(known_encodings)
+    def add_student_encodings(self, session: Session, student: Student, encodings: List[List[float]]):
+        student.encodings = encodings
+        session.add(student)
+        session.commit()
+        session.refresh(student)
 
-    def recognize_faces(self, image_path: str) -> List[str]:
+    def recognize_faces(self, session: Session, image_path: str) -> List[str]:
         try:
             target_representations = DeepFace.represent(
                 img_path=image_path,
@@ -84,7 +68,10 @@ class FaceRecognitionService:
         if not target_representations:
             return []
 
-        known_encodings_dict = self.load_encodings()
+        # Fetch all students with encodings from DB
+        statement = select(Student)
+        students = session.exec(statement).all()
+        
         recognized_ids = []
         
         # Threshold for VGG-Face Cosine Distance
@@ -97,13 +84,16 @@ class FaceRecognitionService:
             best_match_id = None
             min_distance = 1000 # Initialize with high value
             
-            for student_id, student_encodings in known_encodings_dict.items():
-                for known_embedding in student_encodings:
+            for student in students:
+                if not student.encodings:
+                    continue
+                    
+                for known_embedding in student.encodings:
                     distance = self.find_cosine_distance(known_embedding, target_embedding)
                     
                     if distance < threshold and distance < min_distance:
                         min_distance = distance
-                        best_match_id = student_id
+                        best_match_id = student.student_id
             
             if best_match_id and best_match_id not in recognized_ids:
                 recognized_ids.append(best_match_id)

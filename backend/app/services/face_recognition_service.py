@@ -38,12 +38,22 @@ class FaceRecognitionService:
                     detector_backend="opencv",
                     enforce_detection=True
                 )
-                
-                for embedding_obj in representations:
-                    student_encodings.append(embedding_obj["embedding"])
             except Exception as e:
-                print(f"Error processing image {file_path}: {e}")
-                continue
+                print(f"Warning: Strict detection failed for {file_path}: {e}")
+                print("Retrying with enforce_detection=False...")
+                try:
+                    representations = DeepFace.represent(
+                        img_path=file_path,
+                        model_name="VGG-Face",
+                        detector_backend="opencv",
+                        enforce_detection=False
+                    )
+                except Exception as e2:
+                    print(f"Error processing image {file_path}: {e2}")
+                    continue
+                
+            for embedding_obj in representations:
+                student_encodings.append(embedding_obj["embedding"])
         
         return student_encodings
 
@@ -61,9 +71,19 @@ class FaceRecognitionService:
                 detector_backend="opencv",
                 enforce_detection=True
             )
-        except Exception:
-            # No faces detected or other error
-            return []
+        except Exception as e:
+            print(f"Warning: Strict detection failed for target image: {e}")
+            print("Retrying with enforce_detection=False...")
+            try:
+                target_representations = DeepFace.represent(
+                    img_path=image_path,
+                    model_name="VGG-Face",
+                    detector_backend="opencv",
+                    enforce_detection=False
+                )
+            except Exception:
+                # No faces detected or other error even with relaxed settings
+                return []
         
         if not target_representations:
             return []

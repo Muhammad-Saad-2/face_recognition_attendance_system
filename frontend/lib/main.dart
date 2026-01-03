@@ -1,6 +1,10 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:open_file/open_file.dart';
 import 'api_service.dart';
 
 late List<CameraDescription> cameras;
@@ -13,6 +17,13 @@ Future<void> main() async {
     print('Error fetching cameras: $e');
     cameras = [];
   }
+  
+  // Set status bar color to transparent for a cleaner look
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+  ));
+  
   runApp(const VerifaceApp());
 }
 
@@ -23,332 +34,236 @@ class VerifaceApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Veriface',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: Colors.cyanAccent,
-        scaffoldBackgroundColor: const Color(0xFF050510),
-        colorScheme: const ColorScheme.dark(
-          primary: Colors.cyanAccent,
-          secondary: Colors.purpleAccent,
-          surface: Color(0xFF101020),
+        brightness: Brightness.light,
+        primaryColor: Colors.indigo,
+        scaffoldBackgroundColor: Colors.grey[50],
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.indigo,
+          brightness: Brightness.light,
+          surface: Colors.white,
         ),
         useMaterial3: true,
-        fontFamily: 'Roboto', // Default, can be changed if fonts are added
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            color: Colors.black87,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.indigo,
+            foregroundColor: Colors.white,
+            elevation: 2,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.indigo, width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          labelStyle: TextStyle(color: Colors.grey[700]),
+        ),
       ),
       home: const HomeScreen(),
     );
   }
 }
 
-// --- Custom Widgets ---
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
-class BackgroundScaffold extends StatelessWidget {
-  final Widget body;
-  final AppBar? appBar;
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
-  const BackgroundScaffold({super.key, required this.body, this.appBar});
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isDownloading = false;
+
+  Future<void> _viewAttendance() async {
+    setState(() => _isDownloading = true);
+    try {
+      final api = ApiService();
+      final bytes = await api.downloadAttendance();
+      
+      // Use ApplicationDocumentsDirectory which doesn't require explicit permissions
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/attendance_report.xlsx');
+      await file.writeAsBytes(bytes);
+      
+      final result = await OpenFile.open(file.path);
+      
+      if (mounted) {
+        if (result.type != ResultType.done) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not open file: ${result.message}'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: appBar != null
-          ? AppBar(
-              title: appBar!.title,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              centerTitle: true,
-              titleTextStyle: const TextStyle(
-                color: Colors.cyanAccent,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(blurRadius: 10, color: Colors.cyan, offset: Offset(0, 0))
-                ],
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Spacer(),
+              // Logo or Icon
+              Container(
+                height: 120,
+                width: 120,
+                decoration: BoxDecoration(
+                  color: Colors.indigo.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.face_retouching_natural,
+                  size: 64,
+                  color: Colors.indigo,
+                ),
               ),
-              iconTheme: const IconThemeData(color: Colors.white),
-            )
-          : null,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF050510),
-              Color(0xFF100520),
-              Color(0xFF001020),
+              const SizedBox(height: 32),
+              const Text(
+                'Veriface',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const Text(
+                'Smart Attendance System',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Spacer(),
+              _buildMenuButton(
+                context,
+                'Register Student',
+                Icons.person_add_outlined,
+                () {
+                  if (cameras.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RegistrationScreen()),
+                    );
+                  } else {
+                    _showNoCameraSnackBar(context);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildMenuButton(
+                context,
+                'Mark Attendance',
+                Icons.camera_alt_outlined,
+                () {
+                  if (cameras.isNotEmpty) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AttendanceScreen()),
+                    );
+                  } else {
+                    _showNoCameraSnackBar(context);
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: _isDownloading ? null : _viewAttendance,
+                icon: _isDownloading 
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.description_outlined),
+                label: Text(_isDownloading ? 'Opening...' : 'View Attendance Report'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.indigo,
+                  side: const BorderSide(color: Colors.indigo),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 48),
             ],
           ),
         ),
-        child: Stack(
-          children: [
-            // "Sparking" effect (simple glowing orbs)
-            Positioned(
-              top: -50,
-              left: -50,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.purpleAccent.withOpacity(0.2),
-                  boxShadow: [
-                    BoxShadow(blurRadius: 100, color: Colors.purpleAccent.withOpacity(0.3))
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -50,
-              right: -50,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.cyanAccent.withOpacity(0.2),
-                  boxShadow: [
-                    BoxShadow(blurRadius: 100, color: Colors.cyanAccent.withOpacity(0.3))
-                  ],
-                ),
-              ),
-            ),
-            SafeArea(child: body),
-          ],
-        ),
       ),
     );
   }
-}
 
-class GlowButton extends StatelessWidget {
-  final VoidCallback? onPressed;
-  final String text;
-  final IconData? icon;
-  final Color color;
-
-  const GlowButton({
-    super.key,
-    required this.onPressed,
-    required this.text,
-    this.icon,
-    this.color = Colors.cyanAccent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.4),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.black.withOpacity(0.6),
-          foregroundColor: color,
-          shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-            side: BorderSide(color: color.withOpacity(0.8), width: 2),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[Icon(icon), const SizedBox(width: 10)],
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(blurRadius: 10, color: color, offset: const Offset(0, 0))
-                ],
-              ),
-            ),
-          ],
-        ),
+  Widget _buildMenuButton(BuildContext context, String title, IconData icon, VoidCallback onPressed) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 24),
+      label: Text(title),
+      style: ElevatedButton.styleFrom(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
       ),
     );
   }
-}
 
-class GlassTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final String? Function(String?)? validator;
-
-  const GlassTextField({
-    super.key,
-    required this.controller,
-    required this.label,
-    this.validator,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextFormField(
-        controller: controller,
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.white70),
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.05),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: Colors.cyanAccent),
-          ),
-        ),
-        validator: validator,
-      ),
-    );
-  }
-}
-
-// --- Screens ---
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BackgroundScaffold(
-      body: Stack(
-        children: [
-          // Show Attendance Button (Top Right)
-          Positioned(
-            top: 20,
-            right: 20,
-            child: GlowButton(
-              onPressed: () async {
-                try {
-                  final api = ApiService();
-                  await api.downloadAttendance();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Attendance Report Downloaded!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              },
-              text: 'Show Attendance',
-              icon: Icons.table_chart,
-              color: Colors.purpleAccent,
-            ),
-          ),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo
-                Container(
-                  width: 150,
-                  height: 150,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.cyanAccent.withOpacity(0.5),
-                        blurRadius: 50,
-                        spreadRadius: 10,
-                      )
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/app_Logo.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (c, o, s) => const Icon(Icons.face, size: 80, color: Colors.white),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                // Title
-                const Text(
-                  'VERIFACE',
-                  style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 5,
-                    shadows: [
-                      Shadow(blurRadius: 20, color: Colors.cyanAccent, offset: Offset(0, 0)),
-                      Shadow(blurRadius: 40, color: Colors.blueAccent, offset: Offset(0, 0)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 50),
-                // Buttons
-                GlowButton(
-                  onPressed: () {
-                    if (cameras.isNotEmpty) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const RegistrationScreen()),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('No camera available')),
-                      );
-                    }
-                  },
-                  text: 'Register Student',
-                  icon: Icons.person_add,
-                ),
-                const SizedBox(height: 30),
-                GlowButton(
-                  onPressed: () {
-                    if (cameras.isNotEmpty) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const AttendanceScreen()),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('No camera available')),
-                      );
-                    }
-                  },
-                  text: 'Mark Attendance',
-                  icon: Icons.camera_alt,
-                  color: Colors.greenAccent,
-                ),
-              ],
-            ),
-          ),
-        ],
+  void _showNoCameraSnackBar(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No camera available'),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -382,7 +297,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Future<void> _initializeCamera() async {
     _cameraController = CameraController(
       cameras.first,
-      ResolutionPreset.medium,
+      ResolutionPreset.high,
       enableAudio: false,
     );
     await _cameraController.initialize();
@@ -438,14 +353,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(response['message'] ?? 'Registration successful')),
+          SnackBar(
+            content: Text(response['message'] ?? 'Registration successful'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -455,116 +378,149 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BackgroundScaffold(
+    return Scaffold(
       appBar: AppBar(title: const Text('Register Student')),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              GlassTextField(
-                controller: _nameController,
-                label: 'Full Name',
-                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              _buildTextField(_nameController, 'Full Name', Icons.person_outline),
+              const SizedBox(height: 16),
+              _buildTextField(_idController, 'Student ID', Icons.badge_outlined),
+              const SizedBox(height: 16),
+              _buildTextField(_programController, 'Program', Icons.school_outlined),
+              const SizedBox(height: 16),
+              _buildTextField(_majorController, 'Major', Icons.book_outlined),
+              const SizedBox(height: 32),
+              
+              const Text(
+                'Capture Photos',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
-              GlassTextField(
-                controller: _idController,
-                label: 'Student ID',
-                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+              const Text(
+                'Please capture at least 3 photos of the student',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
-              GlassTextField(
-                controller: _programController,
-                label: 'Program',
-                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-              ),
-              GlassTextField(
-                controller: _majorController,
-                label: 'Major',
-                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
-              ),
-              const SizedBox(height: 20),
-              const Text('Capture Photos (Min 3)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.cyanAccent)),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
+              
               if (_isCameraInitialized)
                 Container(
-                  height: 300,
+                  height: 400, // Increased height
+                  width: double.infinity,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.cyanAccent, width: 2),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [BoxShadow(color: Colors.cyanAccent.withOpacity(0.2), blurRadius: 10)],
+                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.black,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(16),
                     child: CameraPreview(_cameraController),
                   ),
                 )
               else
-                const Center(child: CircularProgressIndicator()),
-              const SizedBox(height: 10),
+                const SizedBox(
+                  height: 300,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                
+              const SizedBox(height: 16),
+              
               Center(
-                child: GlowButton(
+                child: ElevatedButton.icon(
                   onPressed: _captureImage,
-                  text: 'Capture Photo',
-                  icon: Icons.camera,
-                  color: Colors.purpleAccent,
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Capture Photo'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black87,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 100,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _capturedImages.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.white54),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.file(File(_capturedImages[index].path), width: 100, height: 100, fit: BoxFit.cover),
-                            ),
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _capturedImages.removeAt(index);
-                                });
-                              },
-                              child: Container(
-                                color: Colors.black54,
-                                child: const Icon(Icons.close, color: Colors.red),
+              
+              const SizedBox(height: 16),
+              
+              if (_capturedImages.isNotEmpty)
+                SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _capturedImages.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                File(_capturedImages[index].path),
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                            Positioned(
+                              right: 4,
+                              top: 4,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _capturedImages.removeAt(index);
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
+                
+              const SizedBox(height: 32),
+              
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : _submitRegistration,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Complete Registration'),
               ),
-              const SizedBox(height: 30),
-              _isSubmitting
-                  ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
-                  : GlowButton(
-                      onPressed: _submitRegistration,
-                      text: 'Register',
-                      icon: Icons.check_circle,
-                    ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: Colors.grey[600]),
+      ),
+      validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
     );
   }
 }
@@ -621,13 +577,26 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       final api = ApiService();
       final response = await api.markAttendance(image);
 
+      print('Attendance Response: $response'); // Debugging
+
       if (mounted) {
-        _showResultDialog(response);
+        final recognizedCount = response['recognized_count'] as int? ?? 0;
+        final students = response['students'] as List<dynamic>? ?? [];
+
+        if (recognizedCount == 0 || students.isEmpty) {
+          _showUnregisteredDialog();
+        } else {
+          _showResultDialog(response);
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -635,30 +604,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     }
   }
 
-  void _showResultDialog(Map<String, dynamic> response) {
-    final recognizedCount = response['recognized_count'];
-    final students = response['students'] as List<dynamic>;
-
+  void _showUnregisteredDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF101020),
-        title: Text('Attendance Marked ($recognizedCount)', style: const TextStyle(color: Colors.cyanAccent)),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: students.length,
-            itemBuilder: (context, index) {
-              final s = students[index];
-              return ListTile(
-                leading: const Icon(Icons.check_circle, color: Colors.greenAccent),
-                title: Text(s['name'], style: const TextStyle(color: Colors.white)),
-                subtitle: Text('${s['student_id']} - ${s['program']}', style: const TextStyle(color: Colors.white70)),
-              );
-            },
-          ),
-        ),
+        title: const Text('Not Recognized'),
+        content: const Text('Face not recognized. Please register the student first.'),
         actions: [
           TextButton(
             onPressed: () {
@@ -667,51 +618,177 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                 _capturedImage = null;
               });
             },
-            child: const Text('OK', style: TextStyle(color: Colors.cyanAccent)),
+            child: const Text('OK'),
           ),
         ],
       ),
     );
   }
 
+  void _showResultDialog(Map<String, dynamic> response) {
+    final recognizedCount = response['recognized_count'];
+    final students = response['students'] as List<dynamic>;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check_circle, color: Colors.green),
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  'Attendance Marked ($recognizedCount)',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: students.length,
+                separatorBuilder: (context, index) => const Divider(),
+                itemBuilder: (context, index) {
+                  final s = students[index];
+                  final name = s['name']?.toString();
+                  final studentId = s['student_id']?.toString();
+                  final program = s['program']?.toString();
+                  
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      name ?? 'Unknown',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${studentId ?? 'N/A'} • ${program ?? 'N/A'}'),
+                        if (name == null)
+                          Text(
+                            'Debug: $s',
+                            style: const TextStyle(color: Colors.red, fontSize: 10),
+                          ),
+                      ],
+                    ),
+                    trailing: const Icon(Icons.check, color: Colors.green),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() {
+                  _capturedImage = null;
+                });
+              },
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return BackgroundScaffold(
+    return Scaffold(
       appBar: AppBar(title: const Text('Mark Attendance')),
       body: Column(
         children: [
-          if (_isCameraInitialized)
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.cyanAccent, width: 2),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [BoxShadow(color: Colors.cyanAccent.withOpacity(0.2), blurRadius: 20)],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: _capturedImage == null
-                      ? CameraPreview(_cameraController)
-                      : Image.file(File(_capturedImage!.path), fit: BoxFit.cover),
-                ),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
-            )
-          else
-            const Expanded(child: Center(child: CircularProgressIndicator())),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: _isCameraInitialized
+                    ? (_capturedImage == null
+                        ? CameraPreview(_cameraController)
+                        : Image.file(File(_capturedImage!.path), fit: BoxFit.cover))
+                    : const Center(child: CircularProgressIndicator()),
+              ),
+            ),
+          ),
           
-          Padding(
-            padding: const EdgeInsets.all(30),
-            child: SizedBox(
-              width: double.infinity,
-              child: _isProcessing
-                  ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
-                  : GlowButton(
-                      onPressed: _captureAndMarkAttendance,
-                      text: 'Capture & Mark',
-                      icon: Icons.camera_enhance,
-                      color: Colors.greenAccent,
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Position your face within the frame',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.w500,
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isProcessing ? null : _captureAndMarkAttendance,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        backgroundColor: Colors.indigo,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      icon: _isProcessing 
+                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Icon(Icons.camera_enhance, size: 28),
+                      label: Text(
+                        _isProcessing ? 'Processing...' : 'Capture & Mark',
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 from sqlmodel import Session, select
 import shutil
 import os
+import time
 from openpyxl import Workbook
 from tempfile import NamedTemporaryFile
 from app.core.database import get_session
@@ -21,6 +22,17 @@ async def mark_attendance(
     session: Session = Depends(get_session)
 ):
     # 1. Save uploaded image temporarily
+    timestamp = int(time.time())
+    debug_filename = f"debug_{timestamp}_{image.filename}"
+    debug_path = os.path.join("debug_images", debug_filename)
+    
+    # Save for debugging
+    with open(debug_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+    
+    # Reset file pointer for processing
+    image.file.seek(0)
+    
     temp_path = f"temp_{image.filename}"
     with open(temp_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)

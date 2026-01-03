@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:camera/camera.dart';
@@ -7,7 +8,7 @@ class ApiService {
   // Use 10.0.2.2 for Android emulator to access localhost of the host machine
   // Use localhost or 127.0.0.1 for iOS simulator or web
   // For physical device, use your machine's local IP address (e.g., 192.168.1.x)
-  static const String baseUrl = 'http://192.168.100.181:8000'; 
+  static const String baseUrl = 'https://saad-muhammad-attendance-backend.hf.space'; 
 
   Future<Map<String, dynamic>> registerStudent({
     required String name,
@@ -67,15 +68,13 @@ class ApiService {
       throw Exception('Error connecting to server: $e');
     }
   }
-  Future<void> downloadAttendance() async {
+  Future<Uint8List> downloadAttendance() async {
     try {
-      final uri = Uri.parse('$baseUrl/export');
+      final uri = Uri.parse('$baseUrl/download_attendance');
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        // In a real app, we would save the file using path_provider
-        // For now, we just acknowledge the success
-        print('Attendance report downloaded successfully');
+        return response.bodyBytes;
       } else {
         throw Exception('Failed to download attendance: ${response.body}');
       }

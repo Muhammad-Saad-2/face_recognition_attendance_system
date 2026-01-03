@@ -46,6 +46,9 @@ app.*.map.json
 
 /backend/.env
 /backend/images/
+/backend/.venv/
+/backend/__pycache__/
+/backend/temp_*
 
 /frontend/assets
 /frontend/build

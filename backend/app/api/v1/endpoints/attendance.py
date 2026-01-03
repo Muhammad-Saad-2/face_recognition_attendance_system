@@ -27,7 +27,7 @@ async def mark_attendance(
     
     # 2. Detect Faces
     try:
-        recognized_ids = face_service.recognize_faces(temp_path)
+        recognized_ids = face_service.recognize_faces(session, temp_path)
     except Exception as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)

@@ -95,12 +95,14 @@ class FaceRecognitionService:
         # Fetch all students with encodings from DB
         statement = select(Student)
         students = session.exec(statement).all()
+        print(f"DEBUG: Found {len(students)} students in DB.")
         
         recognized_ids = []
         
         # Threshold for VGG-Face Cosine Distance
         # 0.40 is the recommended threshold for VGG-Face
-        threshold = 0.40
+        # Increasing to 0.50 to handle mobile camera quality/lighting
+        threshold = 0.50
 
         for target_obj in target_representations:
             target_embedding = target_obj["embedding"]
@@ -114,7 +116,7 @@ class FaceRecognitionService:
                     
                 for known_embedding in student.encodings:
                     distance = self.find_cosine_distance(known_embedding, target_embedding)
-                    # print(f"DEBUG: Distance to {student.name} ({student.student_id}): {distance}")
+                    print(f"DEBUG: Distance to {student.name} ({student.student_id}): {distance}")
                     
                     if distance < threshold and distance < min_distance:
                         min_distance = distance

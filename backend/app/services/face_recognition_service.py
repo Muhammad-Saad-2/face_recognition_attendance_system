@@ -30,30 +30,20 @@ class FaceRecognitionService:
                 shutil.copyfileobj(image.file, buffer)
             
             try:
-                # Use VGG-Face and opencv backend as requested
+                # Use Facenet512 and retinaface backend as requested
                 # enforce_detection=True ensures we only get valid faces
                 representations = DeepFace.represent(
                     img_path=file_path,
-                    model_name="VGG-Face",
-                    detector_backend="opencv",
+                    model_name="Facenet512",
+                    detector_backend="retinaface",
                     enforce_detection=True
                 )
-            except Exception as e:
-                print(f"Warning: Strict detection failed for {file_path}: {e}")
-                print("Retrying with enforce_detection=False...")
-                try:
-                    representations = DeepFace.represent(
-                        img_path=file_path,
-                        model_name="VGG-Face",
-                        detector_backend="opencv",
-                        enforce_detection=False
-                    )
-                except Exception as e2:
-                    print(f"Error processing image {file_path}: {e2}")
-                    continue
                 
-            for embedding_obj in representations:
-                student_encodings.append(embedding_obj["embedding"])
+                for embedding_obj in representations:
+                    student_encodings.append(embedding_obj["embedding"])
+            except Exception as e:
+                print(f"Error processing image {file_path}: {e}")
+                continue
         
         return student_encodings
 
@@ -67,23 +57,13 @@ class FaceRecognitionService:
         try:
             target_representations = DeepFace.represent(
                 img_path=image_path,
-                model_name="VGG-Face",
-                detector_backend="opencv",
+                model_name="Facenet512",
+                detector_backend="retinaface",
                 enforce_detection=True
             )
         except Exception as e:
-            print(f"Warning: Strict detection failed for target image: {e}")
-            print("Retrying with enforce_detection=False...")
-            try:
-                target_representations = DeepFace.represent(
-                    img_path=image_path,
-                    model_name="VGG-Face",
-                    detector_backend="opencv",
-                    enforce_detection=False
-                )
-            except Exception:
-                # No faces detected or other error even with relaxed settings
-                return []
+            print(f"Warning: Detection failed for target image: {e}")
+            return []
         
         if not target_representations:
             print("DEBUG: No faces detected in target image.")
@@ -99,10 +79,9 @@ class FaceRecognitionService:
         
         recognized_ids = []
         
-        # Threshold for VGG-Face Cosine Distance
-        # 0.40 is the recommended threshold for VGG-Face
-        # Increasing to 0.50 to handle mobile camera quality/lighting
-        threshold = 0.50
+        # Threshold for Facenet512 Cosine Distance
+        # 0.30 is the recommended threshold for Facenet512
+        threshold = 0.30
 
         for target_obj in target_representations:
             target_embedding = target_obj["embedding"]

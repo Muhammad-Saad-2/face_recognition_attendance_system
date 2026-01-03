@@ -288,6 +288,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _isCameraInitialized = false;
   bool _isSubmitting = false;
 
+  int _selectedCameraIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -295,17 +297,36 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   Future<void> _initializeCamera() async {
+    if (cameras.isEmpty) return;
+    
     _cameraController = CameraController(
-      cameras.first,
+      cameras[_selectedCameraIndex],
       ResolutionPreset.high,
       enableAudio: false,
     );
-    await _cameraController.initialize();
-    if (mounted) {
-      setState(() {
-        _isCameraInitialized = true;
-      });
+    
+    try {
+      await _cameraController.initialize();
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+        });
+      }
+    } catch (e) {
+      print('Error initializing camera: $e');
     }
+  }
+
+  Future<void> _toggleCamera() async {
+    if (cameras.length < 2) return;
+    
+    setState(() {
+      _isCameraInitialized = false;
+      _selectedCameraIndex = (_selectedCameraIndex + 1) % cameras.length;
+    });
+    
+    await _cameraController.dispose();
+    await _initializeCamera();
   }
 
   @override
@@ -423,7 +444,30 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: CameraPreview(_cameraController),
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: double.infinity,
+                          child: CameraPreview(_cameraController),
+                        ),
+                        if (cameras.length > 1)
+                          Positioned(
+                            top: 16,
+                            right: 16,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.cameraswitch, color: Colors.white),
+                                onPressed: _toggleCamera,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 )
               else
@@ -538,6 +582,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   bool _isProcessing = false;
   XFile? _capturedImage;
 
+  int _selectedCameraIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -545,17 +591,36 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   }
 
   Future<void> _initializeCamera() async {
+    if (cameras.isEmpty) return;
+
     _cameraController = CameraController(
-      cameras.first,
+      cameras[_selectedCameraIndex],
       ResolutionPreset.high,
       enableAudio: false,
     );
-    await _cameraController.initialize();
-    if (mounted) {
-      setState(() {
-        _isCameraInitialized = true;
-      });
+    
+    try {
+      await _cameraController.initialize();
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+        });
+      }
+    } catch (e) {
+      print('Error initializing camera: $e');
     }
+  }
+
+  Future<void> _toggleCamera() async {
+    if (cameras.length < 2) return;
+    
+    setState(() {
+      _isCameraInitialized = false;
+      _selectedCameraIndex = (_selectedCameraIndex + 1) % cameras.length;
+    });
+    
+    await _cameraController.dispose();
+    await _initializeCamera();
   }
 
   @override
@@ -733,9 +798,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: _isCameraInitialized
-                    ? (_capturedImage == null
-                        ? CameraPreview(_cameraController)
-                        : Image.file(File(_capturedImage!.path), fit: BoxFit.cover))
+                    ? Stack(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            height: double.infinity,
+                            child: _capturedImage == null
+                                ? CameraPreview(_cameraController)
+                                : Image.file(File(_capturedImage!.path), fit: BoxFit.cover),
+                          ),
+                          if (cameras.length > 1 && _capturedImage == null)
+                            Positioned(
+                              top: 16,
+                              right: 16,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.cameraswitch, color: Colors.white),
+                                  onPressed: _toggleCamera,
+                                ),
+                              ),
+                            ),
+                        ],
+                      )
                     : const Center(child: CircularProgressIndicator()),
               ),
             ),

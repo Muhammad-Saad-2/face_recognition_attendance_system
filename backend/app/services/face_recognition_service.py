@@ -86,7 +86,11 @@ class FaceRecognitionService:
                 return []
         
         if not target_representations:
+            print("DEBUG: No faces detected in target image.")
             return []
+        
+        print(f"DEBUG: Detected {len(target_representations)} faces in target image.")
+
 
         # Fetch all students with encodings from DB
         statement = select(Student)
@@ -110,10 +114,13 @@ class FaceRecognitionService:
                     
                 for known_embedding in student.encodings:
                     distance = self.find_cosine_distance(known_embedding, target_embedding)
+                    # print(f"DEBUG: Distance to {student.name} ({student.student_id}): {distance}")
                     
                     if distance < threshold and distance < min_distance:
                         min_distance = distance
                         best_match_id = student.student_id
+            
+            print(f"DEBUG: Best match for face: {best_match_id} with distance: {min_distance}")
             
             if best_match_id and best_match_id not in recognized_ids:
                 recognized_ids.append(best_match_id)

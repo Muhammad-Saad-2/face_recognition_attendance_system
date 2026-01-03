@@ -24,6 +24,7 @@ async def mark_attendance(
     # 1. Save uploaded image temporarily
     timestamp = int(time.time())
     debug_filename = f"debug_{timestamp}_{image.filename}"
+    os.makedirs("debug_images", exist_ok=True)
     debug_path = os.path.join("debug_images", debug_filename)
     
     # Save for debugging

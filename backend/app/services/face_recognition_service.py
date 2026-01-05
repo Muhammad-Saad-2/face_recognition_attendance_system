@@ -53,7 +53,7 @@ class FaceRecognitionService:
         session.commit()
         session.refresh(student)
 
-    def recognize_faces(self, session: Session, image_path: str) -> List[str]:
+    def recognize_faces(self, session: Session, image_path: str) -> List[Dict]:
         try:
             target_representations = DeepFace.represent(
                 img_path=image_path,
@@ -85,6 +85,7 @@ class FaceRecognitionService:
 
         for target_obj in target_representations:
             target_embedding = target_obj["embedding"]
+            facial_area = target_obj.get("facial_area")
             
             best_match_id = None
             min_distance = 1000 # Initialize with high value
@@ -103,7 +104,14 @@ class FaceRecognitionService:
             
             print(f"DEBUG: Best match for face: {best_match_id} with distance: {min_distance}")
             
-            if best_match_id and best_match_id not in recognized_ids:
-                recognized_ids.append(best_match_id)
+            if best_match_id:
+                # Check if this student is already in the list to avoid duplicates for the same face
+                # (though one face should match one student)
+                existing = next((item for item in recognized_ids if item["student_id"] == best_match_id), None)
+                if not existing:
+                    recognized_ids.append({
+                        "student_id": best_match_id,
+                        "facial_area": facial_area
+                    })
                     
         return recognized_ids

@@ -1,11 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from sqlmodel import Session, select
 from app.models.student import Student
 from app.models.attendance import Attendance
 
 class AttendanceService:
     def log_attendance(self, session: Session, student: Student):
-        now = datetime.now()
+        # Use UTC+5 (Pakistan Standard Time)
+        tz = timezone(timedelta(hours=5))
+        now = datetime.now(tz)
         attendance = Attendance(
             student_id=student.student_id,
             name=student.name,

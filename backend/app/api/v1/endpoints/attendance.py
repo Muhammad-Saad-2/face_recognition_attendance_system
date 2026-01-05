@@ -4,6 +4,8 @@ from sqlmodel import Session, select
 import shutil
 import os
 import time
+import cv2
+import base64
 from openpyxl import Workbook
 from tempfile import NamedTemporaryFile
 from app.core.database import get_session
@@ -40,22 +42,39 @@ async def mark_attendance(
     
     # 2. Detect Faces
     try:
-        recognized_ids = face_service.recognize_faces(session, temp_path)
+        recognized_faces = face_service.recognize_faces(session, temp_path)
     except Exception as e:
         if os.path.exists(temp_path):
             os.remove(temp_path)
         raise HTTPException(status_code=500, detail=f"Error recognizing faces: {str(e)}")
     
+    # Read image for drawing boxes
+    img = cv2.imread(temp_path)
+    
     # Clean up temp file
     if os.path.exists(temp_path):
         os.remove(temp_path)
 
-    if not recognized_ids:
+    if not recognized_faces:
         return {"message": "No registered students recognized"}
 
     recognized_students = []
 
-    for student_id in recognized_ids:
+    for face_data in recognized_faces:
+        student_id = face_data["student_id"]
+        facial_area = face_data["facial_area"]
+        
+        # Draw bounding box
+        if facial_area:
+            x = int(facial_area['x'])
+            y = int(facial_area['y'])
+            w = int(facial_area['w'])
+            h = int(facial_area['h'])
+            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            
+            # Add label
+            cv2.putText(img, student_id, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
         # Fetch student details from DB
         statement = select(Student).where(Student.student_id == student_id)
         student = session.exec(statement).first()
@@ -70,10 +89,15 @@ async def mark_attendance(
                 "major": student.major
             })
 
+    # Encode image to base64
+    _, buffer = cv2.imencode('.jpg', img)
+    img_base64 = base64.b64encode(buffer).decode('utf-8')
+
     return {
         "message": "Attendance marked",
         "recognized_count": len(recognized_students),
-        "students": recognized_students
+        "students": recognized_students,
+        "image_with_box": img_base64
     }
 
 @router.get("/get_attendance_records")
@@ -94,14 +118,22 @@ async def download_attendance(session: Session = Depends(get_session)):
         ws.title = "Attendance"
         ws.append(["Name", "Student ID", "Program", "Major", "Date", "Time", "Status"])
         
+        ws.column_dimensions['A'].width = 20
+        ws.column_dimensions['B'].width = 15
+        ws.column_dimensions['C'].width = 15
+        ws.column_dimensions['D'].width = 20
+        ws.column_dimensions['E'].width = 15
+        ws.column_dimensions['F'].width = 15
+        ws.column_dimensions['G'].width = 10
+
         for record in records:
             ws.append([
                 record.name,
                 record.student_id,
                 record.program,
                 record.major,
-                record.date,
-                record.time,
+                str(record.date),
+                str(record.time).split('.')[0], # Remove microseconds if present
                 record.status
             ])
             

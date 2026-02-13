@@ -1,3 +1,17 @@
+import sys
+import asyncio
+
+# Fix for aioredis/fastapi-admin duplicate base class TimeoutError in Python 3.11+
+if sys.version_info >= (3, 11):
+    import builtins
+    if not hasattr(builtins, "_TimeoutError_MonkeyPatched"):
+        class MockTimeoutError(Exception):
+            pass
+        
+        # Temporarily replace asyncio.TimeoutError to allow aioredis to import
+        asyncio.TimeoutError = MockTimeoutError
+        builtins._TimeoutError_MonkeyPatched = True
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn

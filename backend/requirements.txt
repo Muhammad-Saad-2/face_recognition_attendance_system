@@ -65,4 +65,3 @@ uvicorn==0.40.0
     # via backend (pyproject.toml)
 passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
-fastapi-admin==1.0.4

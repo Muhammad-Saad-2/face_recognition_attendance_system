@@ -1,25 +1,9 @@
-import sys
-import asyncio
-
-# Fix for aioredis/fastapi-admin duplicate base class TimeoutError in Python 3.11+
-if sys.version_info >= (3, 11):
-    import builtins
-    if not hasattr(builtins, "_TimeoutError_MonkeyPatched"):
-        class MockTimeoutError(Exception):
-            pass
-        
-        # Temporarily replace asyncio.TimeoutError to allow aioredis to import
-        asyncio.TimeoutError = MockTimeoutError
-        builtins._TimeoutError_MonkeyPatched = True
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from app.core.config import settings
 from app.core.database import create_db_and_tables
 from app.api.v1.router import api_router
-
-from app.core.admin import setup_admin
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
@@ -35,7 +19,6 @@ app.add_middleware(
 @app.on_event("startup")
 async def on_startup():
     create_db_and_tables()
-    await setup_admin(app)
 
 app.include_router(api_router)
 

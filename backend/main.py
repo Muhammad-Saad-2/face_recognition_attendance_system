@@ -5,6 +5,8 @@ from app.core.config import settings
 from app.core.database import create_db_and_tables
 from app.api.v1.router import api_router
 
+from app.core.admin import setup_admin
+
 app = FastAPI(title=settings.PROJECT_NAME)
 
 # CORS
@@ -17,8 +19,9 @@ app.add_middleware(
 )
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     create_db_and_tables()
+    await setup_admin(app)
 
 app.include_router(api_router)
 

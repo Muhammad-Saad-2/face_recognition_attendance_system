@@ -8,7 +8,7 @@ class ApiService {
   // Use 10.0.2.2 for Android emulator to access localhost of the host machine
   // Use localhost or 127.0.0.1 for iOS simulator or web
   // For physical device, use your machine's local IP address (e.g., 192.168.1.x)
-  static const String baseUrl = 'https://saad-muhammad-attendance-backend.hf.space'; 
+  static const String baseUrl = "https://saad-muhammad-attendance-backend.hf.space"; 
 
   Future<Map<String, dynamic>> registerStudent({
     required String name,

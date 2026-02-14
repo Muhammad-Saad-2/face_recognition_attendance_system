@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'home_screen.dart';
+import 'admin_portal_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,7 +23,9 @@ class _LoginScreenState extends State<LoginScreen> {
       await api.login(_usernameController.text, _passwordController.text);
       if (mounted) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => kIsWeb ? const AdminPortalScreen() : const HomeScreen(),
+          ),
         );
       }
     } catch (e) {

@@ -79,7 +79,7 @@ def delete_student(
     session.commit()
     return {"message": "Student deleted"}
 
-@router.post("/register_student")
+@router.post("/register")
 async def register_student(
     name: str = Form(...),
     student_id: str = Form(...),

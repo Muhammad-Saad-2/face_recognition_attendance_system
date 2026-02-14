@@ -5,7 +5,8 @@ import 'package:camera/camera.dart';
 import '../models/attendance_model.dart';
 
 class ApiService {
-  static const String baseUrl = "https://saad-muhammad-attendance-backend.hf.space"; 
+  // static const String baseUrl = "http://localhost:8000"; // Local testing
+  static const String baseUrl = "https://saad-muhammad-attendance-backend.hf.space"; // Production
   static String? _token;
 
   static void setToken(String token) {
@@ -105,5 +106,63 @@ class ApiService {
     } else {
       throw Exception('Failed to load report');
     }
+  }
+
+  // Management APIs (Departments, Faculties, Courses)
+
+  Future<List<dynamic>> getDepartments() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/departments/'), headers: _headers);
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to load departments');
+  }
+
+  Future<List<dynamic>> getFaculties() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/faculties/'), headers: _headers);
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to load faculties');
+  }
+
+  Future<List<dynamic>> getCourses() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/courses/'), headers: _headers);
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to load courses');
+  }
+
+  Future<Map<String, dynamic>> createDepartment(String name, String code) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/v1/departments/'),
+      headers: _headers,
+      body: jsonEncode({'name': name, 'code': code}),
+    );
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to create department: ${response.body}');
+  }
+
+  Future<Map<String, dynamic>> createFaculty(String name, String email, int deptId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/v1/faculties/'),
+      headers: _headers,
+      body: jsonEncode({'name': name, 'email': email, 'department_id': deptId}),
+    );
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to create faculty: ${response.body}');
+  }
+
+  Future<Map<String, dynamic>> createCourse(String name, String code, int facultyId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/v1/courses/'),
+      headers: _headers,
+      body: jsonEncode({'name': name, 'code': code, 'faculty_id': facultyId}),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    }
+    throw Exception('Failed to create course: ${response.body}');
+  }
+
+  Future<List<dynamic>> getStudents() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/students/'), headers: _headers);
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to load students');
   }
 }

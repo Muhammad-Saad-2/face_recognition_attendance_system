@@ -21,7 +21,7 @@ router = APIRouter()
 face_service = FaceRecognitionService()
 attendance_service = AttendanceService()
 
-@router.post("/mark_attendance")
+@router.post("/mark")
 async def mark_attendance(
     image: UploadFile = File(...),
     session: Session = Depends(get_session)

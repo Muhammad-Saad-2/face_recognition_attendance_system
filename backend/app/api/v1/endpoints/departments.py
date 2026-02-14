@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 
 from app.api import deps
 from app.core.database import get_session
-from app.models.department import Department, DepartmentCreate, DepartmentRead
+from app.models.department import Department, DepartmentCreate, DepartmentRead, DepartmentUpdate
 from app.models.user import User
 
 router = APIRouter()
@@ -21,6 +21,60 @@ def read_departments(
     """
     departments = session.exec(select(Department).offset(skip).limit(limit)).all()
     return departments
+
+@router.get("/{dept_id}", response_model=DepartmentRead)
+def read_department(
+    dept_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get department by ID.
+    """
+    department = session.get(Department, dept_id)
+    if not department:
+        raise HTTPException(status_code=404, detail="Department not found")
+    return department
+
+@router.put("/{dept_id}", response_model=DepartmentRead)
+def update_department(
+    dept_id: int,
+    department_in: DepartmentUpdate,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Update a department.
+    """
+    department = session.get(Department, dept_id)
+    if not department:
+        raise HTTPException(status_code=404, detail="Department not found")
+    
+    update_data = department_in.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(department, key, value)
+    
+    session.add(department)
+    session.commit()
+    session.refresh(department)
+    return department
+
+@router.delete("/{dept_id}")
+def delete_department(
+    dept_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Delete a department.
+    """
+    department = session.get(Department, dept_id)
+    if not department:
+        raise HTTPException(status_code=404, detail="Department not found")
+    
+    session.delete(department)
+    session.commit()
+    return {"message": "Department deleted"}
 
 @router.post("/", response_model=DepartmentRead)
 def create_department(

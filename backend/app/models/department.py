@@ -15,5 +15,9 @@ class Department(DepartmentBase, table=True):
 class DepartmentCreate(DepartmentBase):
     pass
 
+class DepartmentUpdate(SQLModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+
 class DepartmentRead(DepartmentBase):
     id: int

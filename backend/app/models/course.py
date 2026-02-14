@@ -16,5 +16,10 @@ class Course(CourseBase, table=True):
 class CourseCreate(CourseBase):
     pass
 
+class CourseUpdate(SQLModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    faculty_id: Optional[int] = None
+
 class CourseRead(CourseBase):
     id: int

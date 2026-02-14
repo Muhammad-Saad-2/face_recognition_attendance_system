@@ -6,7 +6,7 @@ from sqlmodel import Session, select
 
 from app.core import security
 from app.core.database import get_session
-from app.models.user import User
+from app.models.user import User, UserRole
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"/api/v1/login/access-token"
@@ -37,4 +37,14 @@ def get_current_active_user(
 ) -> User:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+def get_current_admin_user(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user does not have enough privileges",
+        )
     return current_user

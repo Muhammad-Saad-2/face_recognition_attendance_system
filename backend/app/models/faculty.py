@@ -16,5 +16,10 @@ class Faculty(FacultyBase, table=True):
 class FacultyCreate(FacultyBase):
     pass
 
+class FacultyUpdate(SQLModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    department_id: Optional[int] = None
+
 class FacultyRead(FacultyBase):
     id: int

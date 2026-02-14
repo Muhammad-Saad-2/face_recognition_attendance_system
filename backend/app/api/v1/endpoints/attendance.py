@@ -8,7 +8,10 @@ import cv2
 import base64
 from openpyxl import Workbook
 from tempfile import NamedTemporaryFile
+from typing import Any, List
+from app.api import deps
 from app.core.database import get_session
+from app.models.attendance import Attendance, AttendanceCreate, AttendanceUpdate
 from app.models.student import Student
 from app.services.face_recognition_service import FaceRecognitionService
 from app.services.attendance_service import AttendanceService
@@ -148,3 +151,73 @@ async def download_attendance(session: Session = Depends(get_session)):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
+
+@router.post("/manual", response_model=Attendance)
+def manual_mark_attendance(
+    attendance_in: AttendanceCreate,
+    session: Session = Depends(get_session),
+    current_user: Any = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Manually mark attendance for a student (Admin only).
+    """
+    statement = select(Student).where(Student.student_id == attendance_in.student_id)
+    student = session.exec(statement).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    attendance = Attendance(
+        student_id=attendance_in.student_id,
+        student_db_id=student.id,
+        course_id=attendance_in.course_id,
+        name=student.name,
+        program=student.program,
+        major=student.major,
+        date=attendance_in.date,
+        time=attendance_in.time,
+        status=attendance_in.status
+    )
+    session.add(attendance)
+    session.commit()
+    session.refresh(attendance)
+    return attendance
+
+@router.put("/{record_id}", response_model=Attendance)
+def update_attendance_record(
+    record_id: int,
+    attendance_in: AttendanceUpdate,
+    session: Session = Depends(get_session),
+    current_user: Any = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Update an attendance record (Admin only).
+    """
+    record = session.get(Attendance, record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    
+    update_data = attendance_in.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(record, key, value)
+    
+    session.add(record)
+    session.commit()
+    session.refresh(record)
+    return record
+
+@router.delete("/{record_id}")
+def delete_attendance_record(
+    record_id: int,
+    session: Session = Depends(get_session),
+    current_user: Any = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Delete an attendance record (Admin only).
+    """
+    record = session.get(Attendance, record_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Attendance record not found")
+    
+    session.delete(record)
+    session.commit()
+    return {"message": "Attendance record deleted"}

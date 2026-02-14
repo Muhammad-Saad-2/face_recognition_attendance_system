@@ -1,12 +1,83 @@
 from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
 from sqlmodel import Session, select
-from typing import List
+from typing import Any, List
+from app.api import deps
 from app.core.database import get_session
-from app.models.student import Student
+from app.models.student import Student, StudentRead, StudentUpdate
 from app.services.face_recognition_service import FaceRecognitionService
 
 router = APIRouter()
 face_service = FaceRecognitionService()
+
+@router.get("/", response_model=List[StudentRead])
+def read_students(
+    session: Session = Depends(get_session),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: Any = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Retrieve students.
+    """
+    students = session.exec(select(Student).offset(skip).limit(limit)).all()
+    return students
+
+@router.get("/{student_id}", response_model=StudentRead)
+def read_student_by_id(
+    student_id: str,
+    session: Session = Depends(get_session),
+    current_user: Any = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get student by student_id.
+    """
+    statement = select(Student).where(Student.student_id == student_id)
+    student = session.exec(statement).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    return student
+
+@router.put("/{student_id}", response_model=StudentRead)
+def update_student(
+    student_id: str,
+    student_in: StudentUpdate,
+    session: Session = Depends(get_session),
+    current_user: Any = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Update a student.
+    """
+    statement = select(Student).where(Student.student_id == student_id)
+    student = session.exec(statement).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    update_data = student_in.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(student, key, value)
+    
+    session.add(student)
+    session.commit()
+    session.refresh(student)
+    return student
+
+@router.delete("/{student_id}")
+def delete_student(
+    student_id: str,
+    session: Session = Depends(get_session),
+    current_user: Any = Depends(deps.get_current_admin_user),
+) -> Any:
+    """
+    Delete a student.
+    """
+    statement = select(Student).where(Student.student_id == student_id)
+    student = session.exec(statement).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    session.delete(student)
+    session.commit()
+    return {"message": "Student deleted"}
 
 @router.post("/register_student")
 async def register_student(

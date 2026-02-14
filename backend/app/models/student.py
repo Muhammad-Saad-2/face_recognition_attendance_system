@@ -23,6 +23,12 @@ class Student(StudentBase, table=True):
 class StudentCreate(StudentBase):
     pass
 
+class StudentUpdate(SQLModel):
+    name: Optional[str] = None
+    program: Optional[str] = None
+    major: Optional[str] = None
+    department_id: Optional[int] = None
+
 class StudentRead(StudentBase):
     id: int
     created_at: datetime

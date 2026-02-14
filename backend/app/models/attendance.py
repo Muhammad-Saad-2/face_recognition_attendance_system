@@ -20,3 +20,15 @@ class Attendance(SQLModel, table=True):
     # Relationships
     student: Optional["Student"] = Relationship(back_populates="attendances")
     course: Optional["Course"] = Relationship(back_populates="attendances")
+
+class AttendanceCreate(SQLModel):
+    student_id: str
+    course_id: Optional[int] = None
+    date: date
+    time: time
+    status: str = "Present"
+
+class AttendanceUpdate(SQLModel):
+    status: Optional[str] = None
+    date: Optional[date] = None
+    time: Optional[time] = None

@@ -11,6 +11,7 @@ class UserBase(SQLModel):
     username: str = Field(index=True, unique=True)
     email: str = Field(index=True, unique=True)
     full_name: str = Field(index=True)
+    faculty_id: Optional[str] = Field(default=None, index=True)
     role: str = Field(default="admin")
     is_super_admin: bool = Field(default=False)
     is_active: bool = Field(default=True)
@@ -28,5 +29,6 @@ class UserRead(UserBase):
 class UserUpdate(SQLModel):
     email: Optional[str] = None
     full_name: Optional[str] = None
+    faculty_id: Optional[str] = None
     password: Optional[str] = None
     is_active: Optional[bool] = None

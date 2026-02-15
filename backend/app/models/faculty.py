@@ -4,6 +4,7 @@ from sqlmodel import Field, SQLModel, Relationship
 class FacultyBase(SQLModel):
     name: str = Field(index=True)
     email: str = Field(index=True, unique=True)
+    faculty_id: Optional[str] = Field(default=None, index=True)
     department_id: Optional[int] = Field(default=None, foreign_key="department.id")
 
 class Faculty(FacultyBase, table=True):
@@ -19,6 +20,7 @@ class FacultyCreate(FacultyBase):
 class FacultyUpdate(SQLModel):
     name: Optional[str] = None
     email: Optional[str] = None
+    faculty_id: Optional[str] = None
     department_id: Optional[int] = None
 
 class FacultyRead(FacultyBase):

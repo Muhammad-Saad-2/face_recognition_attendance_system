@@ -58,7 +58,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
 
     await showDialog(
       context: context,
-      builder: (context) => StatefulWidget(
+      builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: Text(isEditing ? 'Edit Course' : 'Add Course'),
           content: Column(

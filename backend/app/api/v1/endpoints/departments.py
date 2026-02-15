@@ -80,6 +80,7 @@ def create_department(
     *,
     session: Session = Depends(get_session),
     department_in: DepartmentCreate,
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Create new department.

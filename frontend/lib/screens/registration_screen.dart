@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
@@ -299,25 +300,37 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           scrollDirection: Axis.horizontal,
                           itemCount: _capturedImages.length,
                           itemBuilder: (context, index) {
-                            return Stack(
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(right: 8),
-                                  width: 100,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.blueAccent),
-                                    image: DecorationImage(image: FileImage(File(_capturedImages[index].path)), fit: BoxFit.cover),
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: InkWell(
-                                    onTap: () => _removeImage(index),
-                                    child: const CircleAvatar(radius: 12, backgroundColor: Colors.red, child: Icon(Icons.close, size: 16, color: Colors.white)),
-                                  ),
-                                ),
-                              ],
+                            return FutureBuilder<Uint8List>(
+                              future: _capturedImages[index].readAsBytes(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.done && snapshot.data != null) {
+                                  return Stack(
+                                    children: [
+                                      Container(
+                                        margin: const EdgeInsets.only(right: 8),
+                                        width: 100,
+                                        decoration: BoxDecoration(
+                                          border: Border.all(color: Colors.blueAccent),
+                                          image: DecorationImage(
+                                            image: MemoryImage(snapshot.data!),
+                                            fit: BoxFit.cover
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        child: InkWell(
+                                          onTap: () => _removeImage(index),
+                                          child: const CircleAvatar(radius: 12, backgroundColor: Colors.red, child: Icon(Icons.close, size: 16, color: Colors.white)),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                } else {
+                                  return const SizedBox(width: 100, child: Center(child: CircularProgressIndicator()));
+                                }
+                              },
                             );
                           },
                         ),

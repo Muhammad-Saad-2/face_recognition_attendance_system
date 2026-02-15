@@ -57,7 +57,7 @@ class _ProgramManagementScreenState extends State<ProgramManagementScreen> {
 
     await showDialog(
       context: context,
-      builder: (context) => StatefulWidget(
+      builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           title: Text(isEditing ? 'Edit Program' : 'Add Program'),
           content: Column(

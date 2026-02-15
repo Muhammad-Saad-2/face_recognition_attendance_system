@@ -68,13 +68,8 @@ class ApiService {
     }
 
     for (var image in images) {
-      if (image.path.startsWith('http')) {
-        // Handle web images if needed
         final bytes = await image.readAsBytes();
-        request.files.add(http.MultipartFile.fromBytes('images', bytes, filename: 'image.jpg'));
-      } else {
-        request.files.add(await http.MultipartFile.fromPath('images', image.path));
-      }
+        request.files.add(http.MultipartFile.fromBytes('images', bytes, filename: image.name));
     }
 
     var streamedResponse = await request.send();
@@ -123,34 +118,13 @@ class ApiService {
     }
   }
 
-  // Management APIs (Departments, Faculties, Courses)
 
-  Future<List<dynamic>> getDepartments() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/v1/departments/'), headers: _headers);
-    if (response.statusCode == 200) return jsonDecode(response.body);
-    throw Exception('Failed to load departments');
-  }
+  // Management APIs (Faculties)
 
   Future<List<dynamic>> getFaculties() async {
     final response = await http.get(Uri.parse('$baseUrl/api/v1/faculties/'), headers: _headers);
     if (response.statusCode == 200) return jsonDecode(response.body);
     throw Exception('Failed to load faculties');
-  }
-
-  Future<List<dynamic>> getCourses() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/v1/courses/'), headers: _headers);
-    if (response.statusCode == 200) return jsonDecode(response.body);
-    throw Exception('Failed to load courses');
-  }
-
-  Future<Map<String, dynamic>> createDepartment(String name, String code) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/v1/departments/'),
-      headers: _headers,
-      body: jsonEncode({'name': name, 'code': code}),
-    );
-    if (response.statusCode == 200) return jsonDecode(response.body);
-    throw Exception('Failed to create department: ${response.body}');
   }
 
   Future<Map<String, dynamic>> createFaculty(String name, String email, int deptId) async {
@@ -161,18 +135,6 @@ class ApiService {
     );
     if (response.statusCode == 200) return jsonDecode(response.body);
     throw Exception('Failed to create faculty: ${response.body}');
-  }
-
-  Future<Map<String, dynamic>> createCourse(String name, String code, int facultyId) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/v1/courses/'),
-      headers: _headers,
-      body: jsonEncode({'name': name, 'code': code, 'faculty_id': facultyId}),
-    );
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body);
-    }
-    throw Exception('Failed to create course: ${response.body}');
   }
 
   Future<List<dynamic>> getStudents() async {
@@ -255,26 +217,26 @@ class ApiService {
 
   // Academic Structure
   Future<List<dynamic>> getDepartments() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/v1/departments'), headers: _headers);
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/departments/'), headers: _headers);
     if (response.statusCode == 200) return jsonDecode(response.body);
     throw Exception('Failed to load departments');
   }
 
   Future<List<dynamic>> getPrograms() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/v1/programs'), headers: _headers);
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/programs/'), headers: _headers);
     if (response.statusCode == 200) return jsonDecode(response.body);
     throw Exception('Failed to load programs');
   }
 
   Future<List<dynamic>> getCourses() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/v1/courses'), headers: _headers);
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/courses/'), headers: _headers);
     if (response.statusCode == 200) return jsonDecode(response.body);
     throw Exception('Failed to load courses');
   }
 
   // Department Write Ops
   Future<void> createDepartment(Map<String, dynamic> data) async {
-    final response = await http.post(Uri.parse('$baseUrl/api/v1/departments'), headers: _headers, body: jsonEncode(data));
+    final response = await http.post(Uri.parse('$baseUrl/api/v1/departments/'), headers: _headers, body: jsonEncode(data));
     if (response.statusCode != 200) throw Exception('Failed to create department: ${response.body}');
   }
   Future<void> updateDepartment(int id, Map<String, dynamic> data) async {
@@ -288,7 +250,7 @@ class ApiService {
 
   // Program Write Ops
   Future<void> createProgram(Map<String, dynamic> data) async {
-    final response = await http.post(Uri.parse('$baseUrl/api/v1/programs'), headers: _headers, body: jsonEncode(data));
+    final response = await http.post(Uri.parse('$baseUrl/api/v1/programs/'), headers: _headers, body: jsonEncode(data));
     if (response.statusCode != 200) throw Exception('Failed to create program: ${response.body}');
   }
   Future<void> updateProgram(int id, Map<String, dynamic> data) async {
@@ -302,7 +264,7 @@ class ApiService {
 
   // Course Write Ops
   Future<void> createCourse(Map<String, dynamic> data) async {
-    final response = await http.post(Uri.parse('$baseUrl/api/v1/courses'), headers: _headers, body: jsonEncode(data));
+    final response = await http.post(Uri.parse('$baseUrl/api/v1/courses/'), headers: _headers, body: jsonEncode(data));
     if (response.statusCode != 200) throw Exception('Failed to create course: ${response.body}');
   }
   Future<void> updateCourse(int id, Map<String, dynamic> data) async {

@@ -1,3 +1,5 @@
+import os
+import shutil
 from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
 from sqlmodel import Session, select
 from typing import Any, List
@@ -75,6 +77,12 @@ def delete_student(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     
+    # Delete student's images directory
+    if os.path.exists(face_service.images_dir):
+        student_images_dir = os.path.join(face_service.images_dir, student_id)
+        if os.path.exists(student_images_dir):
+            shutil.rmtree(student_images_dir)
+
     session.delete(student)
     session.commit()
     return {"message": "Student deleted"}

@@ -165,4 +165,76 @@ class ApiService {
     if (response.statusCode == 200) return jsonDecode(response.body);
     throw Exception('Failed to load students');
   }
+
+  Future<Map<String, dynamic>> updateStudent(String studentId, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/api/v1/students/$studentId'),
+      headers: _headers,
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to update student: ${response.body}');
+  }
+
+  Future<void> deleteStudent(String studentId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/v1/students/$studentId'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete student: ${response.body}');
+    }
+  }
+
+  // Attendance Management
+  Future<Map<String, dynamic>> createAttendance(Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/v1/attendance/manual'),
+      headers: _headers,
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to create attendance: ${response.body}');
+  }
+
+  Future<Map<String, dynamic>> updateAttendance(int id, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/api/v1/attendance/$id'),
+      headers: _headers,
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to update attendance: ${response.body}');
+  }
+
+  Future<void> deleteAttendance(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/v1/attendance/$id'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete attendance: ${response.body}');
+    }
+  }
+
+  // Faculty Management
+  Future<Map<String, dynamic>> updateFaculty(int id, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/api/v1/faculties/$id'),
+      headers: _headers,
+      body: jsonEncode(data),
+    );
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to update faculty: ${response.body}');
+  }
+
+  Future<void> deleteFaculty(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/v1/faculties/$id'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete faculty: ${response.body}');
+    }
+  }
 }

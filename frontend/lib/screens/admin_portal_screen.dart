@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import 'dashboard_screen.dart';
 import 'faculty_management_screen.dart';
 import 'student_management_screen.dart';
+import 'attendance_management_screen.dart';
 
 class AdminPortalScreen extends StatefulWidget {
   const AdminPortalScreen({super.key});
@@ -16,6 +17,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
   int _selectedIndex = 0;
   final List<Widget> _screens = [
     const DashboardScreen(),
+    const AttendanceManagementScreen(),
     const StudentManagementScreen(),
     const FacultyManagementScreen(),
     const Center(child: Text('Department Management (Coming Soon)')),
@@ -35,6 +37,11 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                 icon: Icon(Icons.dashboard_outlined),
                 selectedIcon: Icon(Icons.dashboard),
                 label: Text('Dashboard'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.access_time_outlined),
+                selectedIcon: Icon(Icons.access_time_filled),
+                label: Text('Attendance'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.people_outline),

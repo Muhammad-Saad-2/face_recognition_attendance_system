@@ -30,8 +30,19 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = e.toString();
+        if (errorMessage.contains("Incorrect username or password")) {
+          errorMessage = "Incorrect username or password";
+        } else if (errorMessage.contains("Login failed:")) {
+          errorMessage = errorMessage.replaceAll("Exception: Login failed: ", "");
+          // Clean up JSON formatting if present
+          if (errorMessage.contains('{"detail":')) {
+             errorMessage = errorMessage.replaceAll('{"detail": "', '').replaceAll('"}', '');
+          }
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     } finally {

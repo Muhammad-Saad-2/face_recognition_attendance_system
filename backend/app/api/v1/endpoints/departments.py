@@ -88,6 +88,22 @@ def create_department(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
+    # Auto-generate unique_id
+    if not department_in.unique_id:
+        # Find max unique_id that is a number
+        all_ids = session.exec(select(Department.unique_id)).all()
+        max_id = 1000
+        for uid in all_ids:
+            if uid and uid.isdigit():
+                try:
+                    uid_int = int(uid)
+                    if uid_int > max_id:
+                        max_id = uid_int
+                except ValueError:
+                    pass
+        
+        department_in.unique_id = str(max_id + 1)
+
     department = Department.from_orm(department_in)
     session.add(department)
     session.commit()

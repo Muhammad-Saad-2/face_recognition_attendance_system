@@ -289,16 +289,19 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isPassword = false}) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon, {bool isPassword = false, bool enabled = true}) {
     return TextField(
       controller: controller,
       obscureText: isPassword,
+      enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         isDense: true,
+        filled: !enabled,
+        fillColor: !enabled ? Colors.grey.shade200 : null,
       ),
     );
   }

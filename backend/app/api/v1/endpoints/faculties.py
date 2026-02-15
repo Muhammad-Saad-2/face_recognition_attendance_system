@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
 from app.core.database import get_session
+from app.api import deps
 from app.models.faculty import Faculty, FacultyCreate, FacultyRead, FacultyUpdate
 from app.models.user import User
 from app.api.permissions import can_manage_faculty

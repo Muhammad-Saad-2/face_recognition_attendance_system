@@ -1,5 +1,5 @@
 from sqlmodel import Session, select
-from app.database import engine
+from app.core.database import engine
 from app.models.user import User
 from app.core.security import get_password_hash
 
@@ -26,7 +26,7 @@ def create_super_admin():
         if existing_user:
             print(f"User {username} already exists. Updating to Super Admin...")
             existing_user.is_super_admin = True
-            existing_user.password_hash = get_password_hash(password)
+            existing_user.hashed_password = get_password_hash(password)
             session.add(existing_user)
             session.commit()
             print("Updated successfully.")
@@ -36,7 +36,7 @@ def create_super_admin():
             username=username,
             email=email,
             full_name="Super Administrator",
-            password_hash=get_password_hash(password),
+            hashed_password=get_password_hash(password),
             role="admin",
             is_super_admin=True
         )

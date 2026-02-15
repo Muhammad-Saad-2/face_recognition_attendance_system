@@ -149,7 +149,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
             children: [
               const Text('Attendance Management', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
               ElevatedButton.icon(
-                onPressed: _showAddDialog,
+                onPressed: ApiService.hasPermission('can_manage_attendance') ? _showAddDialog : null,
                 icon: const Icon(Icons.add),
                 label: const Text('Manual Entry'),
               ),
@@ -204,8 +204,9 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
                                 child: Text(a.status, style: TextStyle(color: a.status == 'Present' ? Colors.green : Colors.red)),
                               )),
                               DataCell(IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () => _deleteAttendance(a.id),
+                                icon: Icon(Icons.delete, color: ApiService.hasPermission('can_manage_attendance') ? Colors.red : Colors.grey),
+                                onPressed: ApiService.hasPermission('can_manage_attendance') ? () => _deleteAttendance(a.id) : null,
+                                tooltip: ApiService.hasPermission('can_manage_attendance') ? 'Delete' : 'No Permission',
                               )),
                             ],
                           )).toList(),

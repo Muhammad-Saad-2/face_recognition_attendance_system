@@ -6,6 +6,7 @@ from app.api import deps
 from app.core.database import get_session
 from app.models.department import Department, DepartmentCreate, DepartmentRead, DepartmentUpdate
 from app.models.user import User
+from app.api.permissions import can_manage_academic
 
 router = APIRouter()
 
@@ -36,12 +37,11 @@ def read_department(
         raise HTTPException(status_code=404, detail="Department not found")
     return department
 
-@router.put("/{dept_id}", response_model=DepartmentRead)
+@router.put("/{dept_id}", response_model=DepartmentRead, dependencies=[Depends(can_manage_academic)])
 def update_department(
     dept_id: int,
     department_in: DepartmentUpdate,
     session: Session = Depends(get_session),
-    current_user: User = Depends(deps.get_current_admin_user),
 ) -> Any:
     """
     Update a department.
@@ -59,11 +59,10 @@ def update_department(
     session.refresh(department)
     return department
 
-@router.delete("/{dept_id}")
+@router.delete("/{dept_id}", dependencies=[Depends(can_manage_academic)])
 def delete_department(
     dept_id: int,
     session: Session = Depends(get_session),
-    current_user: User = Depends(deps.get_current_admin_user),
 ) -> Any:
     """
     Delete a department.
@@ -76,12 +75,11 @@ def delete_department(
     session.commit()
     return {"message": "Department deleted"}
 
-@router.post("/", response_model=DepartmentRead)
+@router.post("/", response_model=DepartmentRead, dependencies=[Depends(can_manage_academic)])
 def create_department(
     *,
     session: Session = Depends(get_session),
     department_in: DepartmentCreate,
-    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Create new department.

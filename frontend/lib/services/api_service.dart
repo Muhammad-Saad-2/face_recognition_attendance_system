@@ -8,9 +8,19 @@ class ApiService {
   // static const String baseUrl = "http://localhost:8000"; // Local testing
   static const String baseUrl = "https://saad-muhammad-attendance-backend.hf.space"; // Production
   static String? _token;
+  static Map<String, dynamic>? _currentUser;
 
   static void setToken(String token) {
     _token = token;
+  }
+
+  static bool get isSuperAdmin => _currentUser?['is_super_admin'] == true;
+  static List<String> get permissions => List<String>.from(_currentUser?['permissions'] ?? []);
+  static Map<String, dynamic>? get currentUser => _currentUser;
+
+  static bool hasPermission(String permission) {
+    if (isSuperAdmin) return true;
+    return permissions.contains(permission);
   }
 
   Map<String, String> get _headers => {
@@ -30,6 +40,7 @@ class ApiService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       _token = data['access_token'];
+      _currentUser = data['user'];
       return data;
     } else {
       throw Exception('Login failed: ${response.body}');
@@ -236,5 +247,94 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to delete faculty: ${response.body}');
     }
+  }
+
+  // Academic Structure
+  Future<List<dynamic>> getDepartments() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/departments'), headers: _headers);
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to load departments');
+  }
+
+  Future<List<dynamic>> getPrograms() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/programs'), headers: _headers);
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to load programs');
+  }
+
+  Future<List<dynamic>> getCourses() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/courses'), headers: _headers);
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to load courses');
+  }
+
+  // Department Write Ops
+  Future<void> createDepartment(Map<String, dynamic> data) async {
+    final response = await http.post(Uri.parse('$baseUrl/api/v1/departments'), headers: _headers, body: jsonEncode(data));
+    if (response.statusCode != 200) throw Exception('Failed to create department: ${response.body}');
+  }
+  Future<void> updateDepartment(int id, Map<String, dynamic> data) async {
+    final response = await http.put(Uri.parse('$baseUrl/api/v1/departments/$id'), headers: _headers, body: jsonEncode(data));
+    if (response.statusCode != 200) throw Exception('Failed to update department: ${response.body}');
+  }
+  Future<void> deleteDepartment(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/api/v1/departments/$id'), headers: _headers);
+    if (response.statusCode != 200) throw Exception('Failed to delete department: ${response.body}');
+  }
+
+  // Program Write Ops
+  Future<void> createProgram(Map<String, dynamic> data) async {
+    final response = await http.post(Uri.parse('$baseUrl/api/v1/programs'), headers: _headers, body: jsonEncode(data));
+    if (response.statusCode != 200) throw Exception('Failed to create program: ${response.body}');
+  }
+  Future<void> updateProgram(int id, Map<String, dynamic> data) async {
+    final response = await http.put(Uri.parse('$baseUrl/api/v1/programs/$id'), headers: _headers, body: jsonEncode(data));
+    if (response.statusCode != 200) throw Exception('Failed to update program: ${response.body}');
+  }
+  Future<void> deleteProgram(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/api/v1/programs/$id'), headers: _headers);
+    if (response.statusCode != 200) throw Exception('Failed to delete program: ${response.body}');
+  }
+
+  // Course Write Ops
+  Future<void> createCourse(Map<String, dynamic> data) async {
+    final response = await http.post(Uri.parse('$baseUrl/api/v1/courses'), headers: _headers, body: jsonEncode(data));
+    if (response.statusCode != 200) throw Exception('Failed to create course: ${response.body}');
+  }
+  Future<void> updateCourse(int id, Map<String, dynamic> data) async {
+    final response = await http.put(Uri.parse('$baseUrl/api/v1/courses/$id'), headers: _headers, body: jsonEncode(data));
+    if (response.statusCode != 200) throw Exception('Failed to update course: ${response.body}');
+  }
+  Future<void> deleteCourse(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/api/v1/courses/$id'), headers: _headers);
+    if (response.statusCode != 200) throw Exception('Failed to delete course: ${response.body}');
+  }
+
+  // Admin Management (Super Admin)
+  Future<List<dynamic>> getAdmins() async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/users/'), headers: _headers);
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to load admins: ${response.body}');
+  }
+
+  Future<void> createAdmin(Map<String, dynamic> data) async {
+    final response = await http.post(Uri.parse('$baseUrl/api/v1/users/'), headers: _headers, body: jsonEncode(data));
+    if (response.statusCode != 200) throw Exception('Failed to create admin: ${response.body}');
+  }
+
+  Future<void> updateAdmin(int id, Map<String, dynamic> data) async {
+    final response = await http.put(Uri.parse('$baseUrl/api/v1/users/$id'), headers: _headers, body: jsonEncode(data));
+    if (response.statusCode != 200) throw Exception('Failed to update admin: ${response.body}');
+  }
+
+  Future<void> deleteAdmin(int id) async {
+    final response = await http.delete(Uri.parse('$baseUrl/api/v1/users/$id'), headers: _headers);
+    if (response.statusCode != 200) throw Exception('Failed to delete admin: ${response.body}');
+  }
+
+  Future<Map<String, dynamic>> getAdminPermissions(int id) async {
+    final response = await http.get(Uri.parse('$baseUrl/api/v1/users/$id/permissions'), headers: _headers);
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    throw Exception('Failed to load permissions: ${response.body}');
   }
 }

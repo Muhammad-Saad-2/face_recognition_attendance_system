@@ -8,6 +8,7 @@ from app.models.department import Department
 from app.models.course import Course
 from app.models.faculty import Faculty
 from app.models.user import User
+from app.models.program import Program
 
 # pool_pre_ping=True helps recover from lost connections (e.g. SSL closed unexpectedly)
 # pool_recycle=300 recycles connections every 5 minutes to prevent stale connections

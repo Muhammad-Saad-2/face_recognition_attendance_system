@@ -1,11 +1,13 @@
 import os
 import shutil
-from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Query, Form, File, UploadFile
 from sqlmodel import Session, select
-from typing import Any, List
-from app.api import deps
+from typing import Any, List, Optional
 from app.core.database import get_session
 from app.models.student import Student, StudentRead, StudentUpdate
+from app.api import deps
+from app.api.deps import get_current_user
+from app.api.permissions import can_manage_students
 from app.services.face_recognition_service import FaceRecognitionService
 
 router = APIRouter()
@@ -39,12 +41,11 @@ def read_student_by_id(
         raise HTTPException(status_code=404, detail="Student not found")
     return student
 
-@router.put("/{student_id}", response_model=StudentRead)
-def update_student(
+@router.put("/{student_id}", response_model=Student, dependencies=[Depends(can_manage_students)])
+async def update_student(
     student_id: str,
     student_in: StudentUpdate,
     session: Session = Depends(get_session),
-    current_user: Any = Depends(deps.get_current_admin_user),
 ) -> Any:
     """
     Update a student.
@@ -52,7 +53,14 @@ def update_student(
     statement = select(Student).where(Student.student_id == student_id)
     student = session.exec(statement).first()
     if not student:
-        raise HTTPException(status_code=404, detail="Student not found")
+        # Try finding by ID if not found by student_id
+        try:
+             s_id = int(student_id)
+             student = session.get(Student, s_id)
+        except:
+             pass
+        if not student:
+             raise HTTPException(status_code=404, detail="Student not found")
     
     update_data = student_in.dict(exclude_unset=True)
     for key, value in update_data.items():
@@ -63,11 +71,10 @@ def update_student(
     session.refresh(student)
     return student
 
-@router.delete("/{student_id}")
-def delete_student(
+@router.delete("/{student_id}", dependencies=[Depends(can_manage_students)])
+async def delete_student(
     student_id: str,
     session: Session = Depends(get_session),
-    current_user: Any = Depends(deps.get_current_admin_user),
 ) -> Any:
     """
     Delete a student.

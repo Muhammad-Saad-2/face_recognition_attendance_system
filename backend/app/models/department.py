@@ -11,6 +11,8 @@ class Department(DepartmentBase, table=True):
     # Relationships
     students: List["Student"] = Relationship(back_populates="department")
     faculty: List["Faculty"] = Relationship(back_populates="department")
+    programs: List["Program"] = Relationship(back_populates="department")
+    courses: List["Course"] = Relationship(back_populates="department")
 
 class DepartmentCreate(DepartmentBase):
     pass

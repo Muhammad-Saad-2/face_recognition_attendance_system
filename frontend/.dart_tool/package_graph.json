@@ -11,6 +11,7 @@
         "cupertino_icons",
         "flutter",
         "http",
+        "intl",
         "open_file",
         "path_provider",
         "permission_handler"
@@ -57,6 +58,15 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "intl",
+      "version": "0.19.0",
+      "dependencies": [
+        "clock",
+        "meta",
+        "path"
       ]
     },
     {

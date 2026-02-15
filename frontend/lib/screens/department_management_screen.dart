@@ -1,59 +1,55 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
-class FacultyManagementScreen extends StatefulWidget {
-  const FacultyManagementScreen({super.key});
+class DepartmentManagementScreen extends StatefulWidget {
+  const DepartmentManagementScreen({super.key});
 
   @override
-  State<FacultyManagementScreen> createState() => _FacultyManagementScreenState();
+  State<DepartmentManagementScreen> createState() => _DepartmentManagementScreenState();
 }
 
-class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
+class _DepartmentManagementScreenState extends State<DepartmentManagementScreen> {
   final _api = ApiService();
-  late Future<List<dynamic>> _facultyFuture;
+  late Future<List<dynamic>> _departmentsFuture;
 
   @override
   void initState() {
     super.initState();
-    _facultyFuture = _api.getFaculties();
+    _departmentsFuture = _api.getDepartments();
   }
 
-  void _refresh() {
+  Future<void> _refresh() async {
     setState(() {
-      _facultyFuture = _api.getFaculties();
+      _departmentsFuture = _api.getDepartments();
     });
   }
 
-  Future<void> _deleteFaculty(int id) async {
-    if (!await _showConfirmationDialog('Delete Faculty', 'Are you sure you want to delete this faculty member?')) return;
-
+  Future<void> _deleteDepartment(int id) async {
+    if (!await _showConfirmationDialog('Delete Department', 'Are you sure?')) return;
     try {
-      await _api.deleteFaculty(id);
+      await _api.deleteDepartment(id);
       _refresh();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Faculty deleted successfully')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Department deleted')));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
     }
   }
 
-  Future<void> _showFacultyDialog({Map<String, dynamic>? faculty}) async {
-    final nameController = TextEditingController(text: faculty != null ? faculty['name'] : '');
-    final emailController = TextEditingController(text: faculty != null ? faculty['email'] : '');
-    final deptIdController = TextEditingController(text: faculty != null ? faculty['department_id'].toString() : '');
-    final isEditing = faculty != null;
+  Future<void> _showDepartmentDialog({Map<String, dynamic>? department}) async {
+    final nameController = TextEditingController(text: department != null ? department['name'] : '');
+    final codeController = TextEditingController(text: department != null ? department['code'] : '');
+    final isEditing = department != null;
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isEditing ? 'Edit Faculty' : 'Add Faculty'),
+        title: Text(isEditing ? 'Edit Department' : 'Add Department'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
             const SizedBox(height: 8),
-            TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
-            const SizedBox(height: 8),
-            TextField(controller: deptIdController, decoration: const InputDecoration(labelText: 'Department ID'), keyboardType: TextInputType.number),
+            TextField(controller: codeController, decoration: const InputDecoration(labelText: 'Code')),
           ],
         ),
         actions: [
@@ -61,24 +57,16 @@ class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
           ElevatedButton(
             onPressed: () async {
               try {
-                final deptId = int.tryParse(deptIdController.text);
-                if (deptId == null) throw Exception('Invalid Department ID');
-
+                final data = {'name': nameController.text, 'code': codeController.text};
                 if (isEditing) {
-                  final data = {
-                    'name': nameController.text,
-                    'email': emailController.text,
-                    'department_id': deptId,
-                  };
-                  await _api.updateFaculty(faculty['id'], data);
+                  await _api.updateDepartment(department['id'], data);
                 } else {
-                  await _api.createFaculty(nameController.text, emailController.text, deptId);
+                  await _api.createDepartment(data);
                 }
-                
                 if (mounted) {
                   Navigator.pop(context);
                   _refresh();
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEditing ? 'Faculty updated' : 'Faculty added')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEditing ? 'Department updated' : 'Department added')));
                 }
               } catch (e) {
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
@@ -116,30 +104,30 @@ class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Faculty Management',
+                'Department Management',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
-                onPressed: ApiService.hasPermission('can_manage_faculty') ? () => _showFacultyDialog() : null,
+                onPressed: ApiService.hasPermission('can_manage_academic') ? () => _showDepartmentDialog() : null,
                 icon: const Icon(Icons.add),
-                label: const Text('Add Faculty Member'),
+                label: const Text('Add Department'),
               ),
             ],
           ),
           const SizedBox(height: 24),
           Expanded(
             child: FutureBuilder<List<dynamic>>(
-              future: _facultyFuture,
+              future: _departmentsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No faculty members found.'));
+                  return const Center(child: Text('No departments found.'));
                 }
 
-                final faculties = snapshot.data!;
+                final departments = snapshot.data!;
                 return Card(
                   child: SingleChildScrollView(
                     child: SizedBox(
@@ -147,28 +135,26 @@ class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
                       child: DataTable(
                         columns: const [
                           DataColumn(label: Text('ID')),
+                          DataColumn(label: Text('Code')),
                           DataColumn(label: Text('Name')),
-                          DataColumn(label: Text('Email')),
-                          DataColumn(label: Text('Department ID')),
                           DataColumn(label: Text('Actions')),
                         ],
-                        rows: faculties.map((f) => DataRow(
+                        rows: departments.map((d) => DataRow(
                           cells: [
-                            DataCell(Text(f['id'].toString())),
-                            DataCell(Text(f['name'])),
-                            DataCell(Text(f['email'])),
-                            DataCell(Text(f['department_id']?.toString() ?? 'N/A')),
+                            DataCell(Text(d['id'].toString())),
+                            DataCell(Text(d['code'])),
+                            DataCell(Text(d['name'])),
                             DataCell(Row(
                               children: [
                                 IconButton(
-                                  icon: Icon(Icons.edit, size: 20, color: ApiService.hasPermission('can_manage_faculty') ? Colors.blue : Colors.grey),
-                                  onPressed: ApiService.hasPermission('can_manage_faculty') ? () => _showFacultyDialog(faculty: f) : null,
-                                  tooltip: ApiService.hasPermission('can_manage_faculty') ? 'Edit' : 'No Permission',
+                                  icon: Icon(Icons.edit, size: 20, color: ApiService.hasPermission('can_manage_academic') ? Colors.blue : Colors.grey),
+                                  onPressed: ApiService.hasPermission('can_manage_academic') ? () => _showDepartmentDialog(department: d) : null,
+                                  tooltip: ApiService.hasPermission('can_manage_academic') ? 'Edit' : 'No Permission',
                                 ),
                                 IconButton(
-                                  icon: Icon(Icons.delete, size: 20, color: ApiService.hasPermission('can_manage_faculty') ? Colors.red : Colors.grey),
-                                  onPressed: ApiService.hasPermission('can_manage_faculty') ? () => _deleteFaculty(f['id']) : null,
-                                  tooltip: ApiService.hasPermission('can_manage_faculty') ? 'Delete' : 'No Permission',
+                                  icon: Icon(Icons.delete, size: 20, color: ApiService.hasPermission('can_manage_academic') ? Colors.red : Colors.grey),
+                                  onPressed: ApiService.hasPermission('can_manage_academic') ? () => _deleteDepartment(d['id']) : null,
+                                  tooltip: ApiService.hasPermission('can_manage_academic') ? 'Delete' : 'No Permission',
                                 ),
                               ],
                             )),

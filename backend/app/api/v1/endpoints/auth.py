@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from app.core import security
 from app.core.database import get_session
 from app.models.user import User
+from app.models.admin_permission import AdminPermission
 
 router = APIRouter()
 
@@ -33,9 +34,25 @@ def login_access_token(
         )
     
     access_token_expires = timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    # Get permissions if any
+    permissions = []
+    if not user.is_super_admin:
+        from app.models.admin_permission import AdminPermission
+        perm = session.exec(select(AdminPermission).where(AdminPermission.user_id == user.id)).first()
+        if perm:
+            permissions = [k for k, v in perm.dict().items() if v is True and k.startswith("can_")]
+
     return {
         "access_token": security.create_access_token(
             user.id, expires_delta=access_token_expires
         ),
         "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "role": user.role,
+            "is_super_admin": user.is_super_admin,
+            "permissions": permissions
+        }
     }

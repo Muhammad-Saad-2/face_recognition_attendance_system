@@ -134,14 +134,14 @@ class _DepartmentManagementScreenState extends State<DepartmentManagementScreen>
                       width: double.infinity,
                       child: DataTable(
                         columns: const [
-                          DataColumn(label: Text('ID')),
+                          DataColumn(label: Text('Dept ID')),
                           DataColumn(label: Text('Code')),
                           DataColumn(label: Text('Name')),
                           DataColumn(label: Text('Actions')),
                         ],
                         rows: departments.map((d) => DataRow(
                           cells: [
-                            DataCell(Text(d['id'].toString())),
+                            DataCell(Text(d['unique_id'] ?? '-')),
                             DataCell(Text(d['code'])),
                             DataCell(Text(d['name'])),
                             DataCell(Row(

@@ -52,6 +52,7 @@ class ApiService {
     required String studentId,
     required String program,
     required String major,
+    int? departmentId,
     required List<XFile> images,
   }) async {
     var uri = Uri.parse('$baseUrl/api/v1/students/register');
@@ -62,6 +63,9 @@ class ApiService {
     request.fields['student_id'] = studentId;
     request.fields['program'] = program;
     request.fields['major'] = major;
+    if (departmentId != null) {
+      request.fields['department_id'] = departmentId.toString();
+    }
 
     for (var image in images) {
       if (image.path.startsWith('http')) {

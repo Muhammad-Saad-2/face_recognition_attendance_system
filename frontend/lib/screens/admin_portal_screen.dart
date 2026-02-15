@@ -9,6 +9,7 @@ import 'department_management_screen.dart';
 import 'program_management_screen.dart';
 import 'course_management_screen.dart';
 import 'manage_admins_screen.dart';
+import 'registration_screen.dart';
 
 class AdminPortalScreen extends StatefulWidget {
   const AdminPortalScreen({super.key});
@@ -50,6 +51,15 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
       const NavigationRailDestination(icon: Icon(Icons.layers_outlined), selectedIcon: Icon(Icons.layers), label: Text('Programs')),
       const NavigationRailDestination(icon: Icon(Icons.book_outlined), selectedIcon: Icon(Icons.book), label: Text('Courses')),
     ];
+
+    if (ApiService.hasPermission('can_manage_students')) {
+       _screens.add(const RegistrationScreen());
+       _destinations.add(const NavigationRailDestination(
+         icon: Icon(Icons.person_add_outlined), 
+         selectedIcon: Icon(Icons.person_add), 
+         label: Text('Register')
+       ));
+    }
 
     if (ApiService.isSuperAdmin) {
       _screens.add(const ManageAdminsScreen());

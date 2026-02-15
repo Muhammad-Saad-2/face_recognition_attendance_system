@@ -100,6 +100,7 @@ async def register_student(
     student_id: str = Form(...),
     program: str = Form(...),
     major: str = Form(...),
+    department_id: Optional[int] = Form(None),
     images: List[UploadFile] = File(...),
     session: Session = Depends(get_session)
 ):
@@ -119,7 +120,13 @@ async def register_student(
         raise HTTPException(status_code=400, detail="No faces detected in uploaded images")
 
     # 3. Create Student Object
-    new_student = Student(name=name, student_id=student_id, program=program, major=major)
+    new_student = Student(
+        name=name, 
+        student_id=student_id, 
+        program=program, 
+        major=major,
+        department_id=department_id
+    )
 
     # 4. Save encodings and student to DB
     face_service.add_student_encodings(session, new_student, student_encodings)

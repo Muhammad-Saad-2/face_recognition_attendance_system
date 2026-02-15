@@ -32,3 +32,13 @@ class AttendanceUpdate(SQLModel):
     status: Optional[str] = None
     date: Optional[date] = None
     time: Optional[time] = None
+
+class AttendanceRead(SQLModel):
+    id: int
+    student_id: str
+    name: str
+    program: str
+    major: str
+    date: date
+    time: time
+    status: str

@@ -4,6 +4,7 @@ from sqlmodel import Field, SQLModel, Relationship
 class ProgramBase(SQLModel):
     name: str = Field(index=True, unique=True)
     code: str = Field(index=True, unique=True)
+    unique_id: Optional[str] = Field(default=None, index=True, unique=True)
     description: Optional[str] = None
     department_id: Optional[int] = Field(default=None, foreign_key="department.id")
 

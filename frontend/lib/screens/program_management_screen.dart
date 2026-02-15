@@ -168,7 +168,7 @@ class _ProgramManagementScreenState extends State<ProgramManagementScreen> {
                       width: double.infinity,
                       child: DataTable(
                         columns: const [
-                          DataColumn(label: Text('ID')),
+                          DataColumn(label: Text('Prog ID')),
                           DataColumn(label: Text('Code')),
                           DataColumn(label: Text('Name')),
                           DataColumn(label: Text('Dept ID')),
@@ -176,7 +176,7 @@ class _ProgramManagementScreenState extends State<ProgramManagementScreen> {
                         ],
                         rows: programs.map((p) => DataRow(
                           cells: [
-                            DataCell(Text(p['id'].toString())),
+                            DataCell(Text(p['unique_id'] ?? '-')),
                             DataCell(Text(p['code'])),
                             DataCell(Text(p['name'])),
                             DataCell(Text(p['department_id']?.toString() ?? 'N/A')),

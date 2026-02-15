@@ -32,6 +32,22 @@ def create_program(
     """
     Create new program.
     """
+    # Auto-generate unique_id
+    if not program_in.unique_id:
+        # Find max unique_id that is a number
+        all_ids = session.exec(select(Program.unique_id)).all()
+        max_id = 20000 # Start from 20000 for programs
+        for uid in all_ids:
+            if uid and uid.isdigit():
+                try:
+                    uid_int = int(uid)
+                    if uid_int > max_id:
+                        max_id = uid_int
+                except ValueError:
+                    pass
+        
+        program_in.unique_id = str(max_id + 1)
+
     program = Program.from_orm(program_in)
     session.add(program)
     session.commit()

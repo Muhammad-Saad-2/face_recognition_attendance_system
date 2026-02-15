@@ -72,6 +72,9 @@ def seed_data():
             ("Mr. Omar Farooq", "omar.farooq@univ.edu", "FAC401", "EE"),
             ("Ms. Hina Altaf", "hina.altaf@univ.edu", "FAC501", "BBA"),
             ("Dr. Zainab Bibi", "zainab.bibi@univ.edu", "FAC601", "PSY"),
+            ("Mr. Kamran Akmal", "kamran.akmal@univ.edu", "FAC701", "CS"),
+            ("Dr. Nadia Hussain", "nadia.hussain@univ.edu", "FAC801", "SE"),
+            ("Mr. Javed Miandad", "javed.miandad@univ.edu", "FAC901", "EE"),
         ]
 
         for name, email, fac_id, dept_code in faculty_list:

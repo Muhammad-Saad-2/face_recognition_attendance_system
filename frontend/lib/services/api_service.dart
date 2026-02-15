@@ -137,6 +137,19 @@ class ApiService {
     throw Exception('Failed to create faculty: ${response.body}');
   }
 
+  Future<Map<String, dynamic>?> getFacultyByFacultyId(String facultyId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/v1/faculties/?faculty_id=$facultyId'),
+      headers: _headers,
+    );
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      if (data.isNotEmpty) return data.first;
+      return null;
+    }
+    throw Exception('Failed to search faculty: ${response.body}');
+  }
+
   Future<List<dynamic>> getStudents() async {
     final response = await http.get(Uri.parse('$baseUrl/api/v1/students/'), headers: _headers);
     if (response.statusCode == 200) return jsonDecode(response.body);

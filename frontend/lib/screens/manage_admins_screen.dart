@@ -32,6 +32,10 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
     final emailController = TextEditingController(text: admin?['email'] ?? '');
     final passwordController = TextEditingController();
 
+    String roleSource = 'Faculty'; // 'Faculty' or 'Manual'
+    String? facultyName;
+
+    // Permissions
     Map<String, bool> permissions = {
       'can_manage_students': false,
       'can_manage_faculty': false,
@@ -41,6 +45,8 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
     };
 
     if (isEditing) {
+      // In edit mode, we don't change source, just edit fields
+      roleSource = 'Manual'; 
       try {
         final perms = await _api.getAdminPermissions(admin!['id']);
         permissions.forEach((key, _) {
@@ -68,6 +74,33 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
             scale: anim1,
             child: StatefulBuilder(
               builder: (context, setState) {
+                
+                Future<void> lookupFaculty(String id) async {
+                  if (id.isEmpty) return;
+                  try {
+                    final faculty = await _api.getFacultyByFacultyId(id);
+                    if (faculty != null) {
+                      setState(() {
+                        nameController.text = faculty['name'];
+                        emailController.text = faculty['email'];
+                        usernameController.text = faculty['faculty_id'] ?? id; // Use ID as username by default
+                        facultyName = faculty['name'];
+                      });
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Found: ${faculty['name']}')));
+                    } else {
+                       setState(() {
+                        nameController.clear();
+                        emailController.clear();
+                        usernameController.clear();
+                        facultyName = null;
+                      });
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Faculty ID not found')));
+                    }
+                  } catch (e) {
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  }
+                }
+
                 return AlertDialog(
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -86,21 +119,84 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          if (!isEditing) ...[
+                             Row(
+                              children: [
+                                const Text("Role Source: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(width: 10),
+                                DropdownButton<String>(
+                                  value: roleSource,
+                                  items: ['Faculty', 'Manual'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                                  onChanged: (val) {
+                                    setState(() {
+                                      roleSource = val!;
+                                      // Clear fields on switch
+                                      if (roleSource == 'Faculty') {
+                                        usernameController.clear();
+                                        nameController.clear();
+                                        emailController.clear();
+                                      }
+                                    });
+                                  }
+                                ),
+                              ],
+                             ),
+                             const SizedBox(height: 16),
+                          ],
+
+                          if (roleSource == 'Faculty' && !isEditing) ...[
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: facultyIdController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Faculty ID (e.g. FAC001)',
+                                      prefixIcon: const Icon(Icons.badge_outlined, size: 20),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      isDense: true,
+                                      suffixIcon: IconButton(
+                                        icon: const Icon(Icons.search),
+                                        onPressed: () => lookupFaculty(facultyIdController.text),
+                                      )
+                                    ),
+                                    onSubmitted: (val) => lookupFaculty(val),
+                                  ),
+                                ),
+                              ],
+                            ),
+                             const SizedBox(height: 8),
+                             if (facultyName != null) 
+                               Text("Verified: $facultyName", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                             const SizedBox(height: 16),
+                          ],
+
                           const Text('Personal Information',
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                           const Divider(),
                           const SizedBox(height: 8),
-                          _buildTextField(usernameController, 'Username', Icons.alternate_email),
+                          
+                          // Username (Auto-filled or Manual)
+                          _buildTextField(usernameController, 'Username', Icons.alternate_email, 
+                            enabled: roleSource == 'Manual' || isEditing), // Editable mainly in manual/edit
+                          
                           const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(child: _buildTextField(nameController, 'Full Name', Icons.person_outline)),
-                              const SizedBox(width: 12),
-                              Expanded(child: _buildTextField(facultyIdController, 'Faculty ID', Icons.badge_outlined)),
-                            ],
-                          ),
+                          
+                          // Full Name & Faculty ID Display
+                          _buildTextField(nameController, 'Full Name', Icons.person_outline, 
+                            enabled: roleSource == 'Manual' || isEditing),
+                          
+                          if (roleSource == 'Manual' || isEditing) ...[
+                             const SizedBox(height: 12),
+                             _buildTextField(facultyIdController, 'Faculty ID (Optional)', Icons.badge_outlined),
+                          ],
+
                           const SizedBox(height: 12),
-                          _buildTextField(emailController, 'Email Address', Icons.email_outlined),
+                          _buildTextField(emailController, 'Email Address', Icons.email_outlined,
+                             enabled: roleSource == 'Manual' || isEditing),
+                            
                           const SizedBox(height: 12),
                           _buildTextField(
                             passwordController,

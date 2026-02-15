@@ -3,6 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -140,6 +141,25 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() {
       _capturedImages.removeAt(index);
     });
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      
+      if (image != null) {
+         if (_capturedImages.length >= 5) {
+            if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Max 5 images allowed')));
+            return;
+         }
+        setState(() {
+          _capturedImages.add(image);
+        });
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+    }
   }
 
   Future<void> _submit() async {
@@ -282,13 +302,27 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       Container(height: 300, color: Colors.black12, child: const Center(child: Text('Camera initializing...'))),
                     
                     const SizedBox(height: 8),
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: _captureImage,
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Capture Image'),
-                        style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _captureImage,
+                          icon: const Icon(Icons.camera_alt),
+                          label: const Text('Capture'),
+                          style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16)),
+                        ),
+                        const SizedBox(width: 16),
+                        ElevatedButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.photo_library),
+                          label: const Text('Upload'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.blueAccent,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16)
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     

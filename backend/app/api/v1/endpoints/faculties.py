@@ -15,12 +15,17 @@ def read_faculty(
     session: Session = Depends(get_session),
     skip: int = 0,
     limit: int = 100,
+    faculty_id: str | None = Query(None, description="Filter by Faculty ID"),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Retrieve faculty members.
     """
-    faculties = session.exec(select(Faculty).offset(skip).limit(limit)).all()
+    query = select(Faculty)
+    if faculty_id:
+        query = query.where(Faculty.faculty_id == faculty_id)
+        
+    faculties = session.exec(query.offset(skip).limit(limit)).all()
     return faculties
 
 @router.get("/{faculty_id}", response_model=FacultyRead)

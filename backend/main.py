@@ -20,6 +20,10 @@ app.add_middleware(
 async def on_startup():
     create_db_and_tables()
 
+@app.get("/")
+def read_root():
+    return {"status": "online", "message": "Face Recognition Attendance System API is running", "docs": "/docs"}
+
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 if __name__ == "__main__":

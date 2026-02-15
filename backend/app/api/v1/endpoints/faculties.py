@@ -86,6 +86,33 @@ def create_faculty(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
+    # Auto-generate faculty_id
+    if not faculty_in.faculty_id:
+        from app.models.department import Department
+        dept = session.get(Department, faculty_in.department_id)
+        if not dept:
+            raise HTTPException(status_code=400, detail="Invalid Department ID")
+        
+        # Format: DEPTCODE-Serial (e.g., CS-0001)
+        prefix = dept.code
+        
+        # Find max serial for this department
+        # We look for faculty_ids starting with the prefix
+        query = select(Faculty.faculty_id).where(Faculty.faculty_id.like(f"{prefix}-%"))
+        existing_ids = session.exec(query).all()
+        
+        max_serial = 0
+        for fid in existing_ids:
+            if fid:
+                parts = fid.split('-')
+                if len(parts) == 2 and parts[1].isdigit():
+                    serial = int(parts[1])
+                    if serial > max_serial:
+                        max_serial = serial
+        
+        new_serial = max_serial + 1
+        faculty_in.faculty_id = f"{prefix}-{new_serial:04d}"
+
     faculty = Faculty.from_orm(faculty_in)
     session.add(faculty)
     session.commit()

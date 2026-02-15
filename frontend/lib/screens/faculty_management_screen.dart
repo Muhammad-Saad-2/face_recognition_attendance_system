@@ -146,7 +146,7 @@ class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
                       width: double.infinity,
                       child: DataTable(
                         columns: const [
-                          DataColumn(label: Text('ID')),
+                          DataColumn(label: Text('Faculty ID')),
                           DataColumn(label: Text('Name')),
                           DataColumn(label: Text('Email')),
                           DataColumn(label: Text('Department ID')),
@@ -154,7 +154,7 @@ class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
                         ],
                         rows: faculties.map((f) => DataRow(
                           cells: [
-                            DataCell(Text(f['id'].toString())),
+                            DataCell(Text(f['faculty_id'] ?? '-')),
                             DataCell(Text(f['name'])),
                             DataCell(Text(f['email'])),
                             DataCell(Text(f['department_id']?.toString() ?? 'N/A')),

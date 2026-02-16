@@ -33,9 +33,11 @@ def seed_data():
                 session.commit()
                 session.refresh(dept)
                 print(f"✅ Created Department: {dept.name} ({dept.unique_id})")
+                dept_id_counter += 1
+            else:
+                print(f"ℹ️  Department already exists: {dept.name} ({dept.unique_id})")
             # Store by code for easy lookup
             departments[dept.code] = dept
-            dept_id_counter += 1
 
         # 2. Programs
         programs_data = [

@@ -10,6 +10,7 @@ import 'program_management_screen.dart';
 import 'course_management_screen.dart';
 import 'manage_admins_screen.dart';
 import 'registration_screen.dart';
+import 'login_screen.dart';
 
 class AdminPortalScreen extends StatefulWidget {
   const AdminPortalScreen({super.key});
@@ -71,23 +72,70 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     }
   }
 
+  void _logout() {
+    ApiService.setToken(''); // Clear token (mock)
+    Navigator.pushReplacement(
+      context, 
+      MaterialPageRoute(builder: (_) => const LoginScreen())
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = ApiService.currentUser;
+    final userName = user?['full_name'] ?? user?['username'] ?? 'Admin';
+
     return Scaffold(
-      body: Row(
+      body: Column(
         children: [
-          NavigationRail(
-            extended: MediaQuery.of(context).size.width > 900,
-            destinations: _destinations,
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (idx) {
-              setState(() {
-                _selectedIndex = idx;
-              });
-            },
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            color: Colors.blueAccent,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.person, color: Colors.blueAccent),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Welcome, $userName',
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                TextButton.icon(
+                  onPressed: _logout,
+                  icon: const Icon(Icons.logout, color: Colors.white),
+                  label: const Text('Logout', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
           ),
-          const VerticalDivider(thickness: 1, width: 1),
-          Expanded(child: _screens[_selectedIndex]),
+          
+          // Main Content
+          Expanded(
+            child: Row(
+              children: [
+                NavigationRail(
+                  extended: MediaQuery.of(context).size.width > 900,
+                  destinations: _destinations,
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: (idx) {
+                    setState(() {
+                      _selectedIndex = idx;
+                    });
+                  },
+                ),
+                const VerticalDivider(thickness: 1, width: 1),
+                Expanded(child: _screens[_selectedIndex]),
+              ],
+            ),
+          ),
         ],
       ),
     );

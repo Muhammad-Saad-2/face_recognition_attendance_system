@@ -6,7 +6,7 @@ class CourseBase(SQLModel):
     code: str = Field(index=True, unique=True)
     semester: int = Field(default=1)
     faculty_id: Optional[int] = Field(default=None, foreign_key="faculty.id")
-    department_id: Optional[int] = Field(default=None, foreign_key="department.id")
+    department_id: Optional[str] = Field(default=None, foreign_key="department.unique_id")
 
 class Course(CourseBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -23,6 +23,7 @@ class CourseUpdate(SQLModel):
     name: Optional[str] = None
     code: Optional[str] = None
     faculty_id: Optional[int] = None
+    department_id: Optional[str] = None
 
 class CourseRead(CourseBase):
     id: int

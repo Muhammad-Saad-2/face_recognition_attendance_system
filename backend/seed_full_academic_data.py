@@ -99,6 +99,46 @@ def seed_data():
                 session.commit()
                 print(f"👤 Created Faculty: {name} ({fac_id})")
 
+        # 4. Dummy Courses
+        # Format: (Name, Code, Semester, DeptCode)
+        courses_list = [
+            ("Intro to Computing", "CS-101", 1, "CS"),
+            ("Programming Fundamentals", "CS-102", 1, "CS"),
+            ("Object Oriented Programming", "CS-201", 2, "CS"),
+            ("Data Structures", "CS-202", 3, "CS"),
+            ("Intro to Software Engineering", "SE-101", 1, "SE"),
+            ("Software Requirements", "SE-201", 2, "SE"),
+            ("Software Design & Arch", "SE-301", 3, "SE"),
+            ("Artificial Intelligence I", "AI-101", 1, "AI"),
+            ("Machine Learning", "AI-201", 2, "AI"),
+            ("Basic Electronics", "EE-101", 1, "EE"),
+            ("Circuit Analysis", "EE-102", 1, "EE"),
+            ("Intro to Business", "BBA-101", 1, "BBA"),
+            ("Principles of Management", "BBA-102", 1, "BBA"),
+            ("Intro to Psychology", "PSY-101", 1, "PSY"),
+            ("Developmental Psychology", "PSY-201", 2, "PSY"),
+        ]
+
+        # Import Course model inside function to avoid circular imports if any
+        from app.models.course import Course
+
+        for name, code, sem, dept_code in courses_list:
+            if dept_code not in departments:
+                continue
+            
+            dept = departments[dept_code]
+            course = session.exec(select(Course).where(Course.code == code)).first()
+            if not course:
+                course = Course(
+                    name=name,
+                    code=code,
+                    semester=sem,
+                    department_id=dept.unique_id # String ID
+                )
+                session.add(course)
+                session.commit()
+                print(f"📘 Created Course: {code} - {name} ({dept_code})")
+
     print("🚀 Seeding Complete!")
 
 if __name__ == "__main__":

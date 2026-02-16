@@ -50,8 +50,7 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
   Future<void> _showCourseDialog({Map<String, dynamic>? course}) async {
     final nameController = TextEditingController(text: course != null ? course['name'] : '');
     final codeController = TextEditingController(text: course != null ? course['code'] : '');
-    int? selectedDeptId = course != null ? course['department_id'] : null;
-    int selectedSemester = course != null && course['semester'] != null ? course['semester'] : 1;
+    String? selectedDeptId = course != null ? course['department_id']?.toString() : null;
     final isEditing = course != null;
 
     if (_departments.isEmpty) await _fetchDepartments();
@@ -68,28 +67,16 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
               const SizedBox(height: 8),
               TextField(controller: codeController, decoration: const InputDecoration(labelText: 'Code')),
               const SizedBox(height: 8),
-              DropdownButtonFormField<int>(
+              DropdownButtonFormField<String>(
                 value: selectedDeptId,
-                items: _departments.map<DropdownMenuItem<int>>((d) {
-                  return DropdownMenuItem<int>(
-                    value: d['id'],
+                items: _departments.map<DropdownMenuItem<String>>((d) {
+                  return DropdownMenuItem<String>(
+                    value: d['unique_id'].toString(),
                     child: Text('${d['code']} - ${d['name']}'),
                   );
                 }).toList(),
                 onChanged: (val) => setState(() => selectedDeptId = val),
                 decoration: const InputDecoration(labelText: 'Department'),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<int>(
-                value: selectedSemester,
-                items: List.generate(8, (index) => index + 1).map((s) {
-                  return DropdownMenuItem<int>(
-                    value: s,
-                    child: Text('Semester $s'),
-                  );
-                }).toList(),
-                onChanged: (val) => setState(() => selectedSemester = val!),
-                decoration: const InputDecoration(labelText: 'Semester'),
               ),
             ],
           ),
@@ -103,7 +90,6 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                     'name': nameController.text,
                     'code': codeController.text,
                     'department_id': selectedDeptId,
-                    'semester': selectedSemester,
                   };
                   if (isEditing) {
                     await _api.updateCourse(course['id'], data);
@@ -185,7 +171,6 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                           DataColumn(label: Text('ID')),
                           DataColumn(label: Text('Code')),
                           DataColumn(label: Text('Name')),
-                          DataColumn(label: Text('Sem')),
                           DataColumn(label: Text('Dept ID')),
                           DataColumn(label: Text('Actions')),
                         ],
@@ -194,7 +179,6 @@ class _CourseManagementScreenState extends State<CourseManagementScreen> {
                             DataCell(Text(c['id'].toString())),
                             DataCell(Text(c['code'])),
                             DataCell(Text(c['name'])),
-                            DataCell(Text(c['semester']?.toString() ?? '1')),
                             DataCell(Text(c['department_id']?.toString() ?? 'N/A')),
                             DataCell(Row(
                               children: [

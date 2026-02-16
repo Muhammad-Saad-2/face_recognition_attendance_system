@@ -88,30 +88,68 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Header
+          // Header - Light theme with user info on right
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            color: Colors.blueAccent,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const CircleAvatar(
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.person, color: Colors.blueAccent),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Welcome, $userName',
-                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-                TextButton.icon(
-                  onPressed: _logout,
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  label: const Text('Logout', style: TextStyle(color: Colors.white)),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // User info on the right
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.blueAccent.shade100,
+                        child: Icon(Icons.person, color: Colors.blueAccent.shade700, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        userName,
+                        style: TextStyle(
+                          color: Colors.grey.shade800,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Container(
+                        height: 24,
+                        width: 1,
+                        color: Colors.grey.shade300,
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: _logout,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red.shade700,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        icon: const Icon(Icons.logout, size: 18),
+                        label: const Text('Logout', style: TextStyle(fontSize: 14)),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

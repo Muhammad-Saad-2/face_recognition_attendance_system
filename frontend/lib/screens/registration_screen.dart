@@ -94,11 +94,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     if (programId == null) return;
     
     final program = _programs.firstWhere((p) => p['id'].toString() == programId);
-    final deptId = program['department_id']?.toString();
+    final String? deptUniqueId = program['department_id']?.toString();
     
+    String? mappedDeptId;
+    if (deptUniqueId != null) {
+      try {
+        final dept = _departments.firstWhere((d) => d['unique_id'] == deptUniqueId);
+        mappedDeptId = dept['id'].toString();
+      } catch (e) {
+        // Department unique_id not found in fetched departments
+        debugPrint("Department with unique_id $deptUniqueId not found");
+      }
+    }
+
     setState(() {
       _selectedProgramId = programId;
-      _selectedDepartmentId = deptId;
+      _selectedDepartmentId = mappedDeptId;
       _updateRollNoPrefix();
     });
   }

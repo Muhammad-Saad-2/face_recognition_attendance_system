@@ -25,7 +25,7 @@ class FacultyUpdate(SQLModel):
     name: Optional[str] = None
     email: Optional[str] = None
     faculty_id: Optional[str] = None
-    department_id: Optional[int] = None
+    department_id: Optional[str] = None
 
 class FacultyRead(FacultyBase):
     id: int

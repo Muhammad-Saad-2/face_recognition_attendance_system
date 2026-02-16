@@ -127,7 +127,7 @@ class ApiService {
     throw Exception('Failed to load faculties');
   }
 
-  Future<Map<String, dynamic>> createFaculty(String name, String email, int deptId) async {
+  Future<Map<String, dynamic>> createFaculty(String name, String email, dynamic deptId) async {
     final response = await http.post(
       Uri.parse('$baseUrl/api/v1/faculties/'),
       headers: _headers,

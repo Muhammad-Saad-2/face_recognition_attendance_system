@@ -50,7 +50,7 @@ class _ProgramManagementScreenState extends State<ProgramManagementScreen> {
   Future<void> _showProgramDialog({Map<String, dynamic>? program}) async {
     final nameController = TextEditingController(text: program != null ? program['name'] : '');
     final codeController = TextEditingController(text: program != null ? program['code'] : '');
-    int? selectedDeptId = program != null ? program['department_id'] : null;
+    String? selectedDeptId = program != null ? program['department_id']?.toString() : null;
     final isEditing = program != null;
 
     if (_departments.isEmpty) await _fetchDepartments();
@@ -67,11 +67,11 @@ class _ProgramManagementScreenState extends State<ProgramManagementScreen> {
               const SizedBox(height: 8),
               TextField(controller: codeController, decoration: const InputDecoration(labelText: 'Code')),
               const SizedBox(height: 8),
-              DropdownButtonFormField<int>(
+              DropdownButtonFormField<String>(
                 value: selectedDeptId,
-                items: _departments.map<DropdownMenuItem<int>>((d) {
-                  return DropdownMenuItem<int>(
-                    value: d['id'],
+                items: _departments.map<DropdownMenuItem<String>>((d) {
+                  return DropdownMenuItem<String>(
+                    value: d['unique_id'].toString(),
                     child: Text('${d['code']} - ${d['name']}'),
                   );
                 }).toList(),

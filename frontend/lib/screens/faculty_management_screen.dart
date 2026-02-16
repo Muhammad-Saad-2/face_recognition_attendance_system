@@ -12,10 +12,22 @@ class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
   final _api = ApiService();
   late Future<List<dynamic>> _facultyFuture;
 
+  List<dynamic> _departments = [];
+
   @override
   void initState() {
     super.initState();
-    _facultyFuture = _api.getFaculties();
+    _refresh();
+    _fetchDepartments();
+  }
+
+  Future<void> _fetchDepartments() async {
+    try {
+      final depts = await _api.getDepartments();
+      setState(() => _departments = depts);
+    } catch (e) {
+      // Handle error
+    }
   }
 
   void _refresh() {
@@ -39,54 +51,67 @@ class _FacultyManagementScreenState extends State<FacultyManagementScreen> {
   Future<void> _showFacultyDialog({Map<String, dynamic>? faculty}) async {
     final nameController = TextEditingController(text: faculty != null ? faculty['name'] : '');
     final emailController = TextEditingController(text: faculty != null ? faculty['email'] : '');
-    final deptIdController = TextEditingController(text: faculty != null ? faculty['department_id'].toString() : '');
+    String? selectedDeptId = faculty != null ? faculty['department_id']?.toString() : null;
     final isEditing = faculty != null;
+
+    if (_departments.isEmpty) await _fetchDepartments();
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(isEditing ? 'Edit Faculty' : 'Add Faculty'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
-            const SizedBox(height: 8),
-            TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
-            const SizedBox(height: 8),
-            TextField(controller: deptIdController, decoration: const InputDecoration(labelText: 'Department ID'), keyboardType: TextInputType.number),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(isEditing ? 'Edit Faculty' : 'Add Faculty'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
+              const SizedBox(height: 8),
+              TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email')),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: selectedDeptId,
+                items: _departments.map<DropdownMenuItem<String>>((d) {
+                  return DropdownMenuItem<String>(
+                    value: d['unique_id'].toString(),
+                    child: Text('${d['code']} - ${d['name']}'),
+                  );
+                }).toList(),
+                onChanged: (val) => setState(() => selectedDeptId = val),
+                 decoration: const InputDecoration(labelText: 'Department'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  if (selectedDeptId == null) throw Exception('Select a department');
+                  
+                  if (isEditing) {
+                    final data = {
+                      'name': nameController.text,
+                      'email': emailController.text,
+                      'department_id': selectedDeptId,
+                    };
+                    await _api.updateFaculty(faculty['id'], data);
+                  } else {
+                    await _api.createFaculty(nameController.text, emailController.text, selectedDeptId!);
+                  }
+                  
+                  if (mounted) {
+                    Navigator.pop(context);
+                    _refresh();
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEditing ? 'Faculty updated' : 'Faculty added')));
+                  }
+                } catch (e) {
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+                }
+              },
+              child: const Text('Save'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                final deptId = int.tryParse(deptIdController.text);
-                if (deptId == null) throw Exception('Invalid Department ID');
-
-                if (isEditing) {
-                  final data = {
-                    'name': nameController.text,
-                    'email': emailController.text,
-                    'department_id': deptId,
-                  };
-                  await _api.updateFaculty(faculty['id'], data);
-                } else {
-                  await _api.createFaculty(nameController.text, emailController.text, deptId);
-                }
-                
-                if (mounted) {
-                  Navigator.pop(context);
-                  _refresh();
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isEditing ? 'Faculty updated' : 'Faculty added')));
-                }
-              } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
       ),
     );
   }

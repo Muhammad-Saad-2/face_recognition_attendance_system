@@ -27,7 +27,7 @@ class ProgramUpdate(SQLModel):
     name: Optional[str] = None
     code: Optional[str] = None
     description: Optional[str] = None
-    department_id: Optional[int] = None
+    department_id: Optional[str] = None
 
 class ProgramRead(ProgramBase):
     id: int

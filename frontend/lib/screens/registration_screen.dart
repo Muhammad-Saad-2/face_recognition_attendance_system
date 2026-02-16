@@ -94,22 +94,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     if (programId == null) return;
     
     final program = _programs.firstWhere((p) => p['id'].toString() == programId);
+    // Use unique_id directly for UI selection
     final String? deptUniqueId = program['department_id']?.toString();
     
-    String? mappedDeptId;
+    // Safety check: ensure the unique_id exists in _departments
+    String? validDeptUniqueId;
     if (deptUniqueId != null) {
-      try {
-        final dept = _departments.firstWhere((d) => d['unique_id'] == deptUniqueId);
-        mappedDeptId = dept['id'].toString();
-      } catch (e) {
-        // Department unique_id not found in fetched departments
-        debugPrint("Department with unique_id $deptUniqueId not found");
+      final exists = _departments.any((d) => d['unique_id'].toString() == deptUniqueId);
+      if (exists) {
+        validDeptUniqueId = deptUniqueId;
+      } else {
+        debugPrint("Department with unique_id $deptUniqueId not found in loaded departments");
       }
     }
 
     setState(() {
       _selectedProgramId = programId;
-      _selectedDepartmentId = mappedDeptId;
+      _selectedDepartmentId = validDeptUniqueId;
       _updateRollNoPrefix();
     });
   }
@@ -186,12 +187,22 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       final fullRollNo = _rollNoPrefix + _rollNoController.text.trim();
       final program = _programs.firstWhere((p) => p['id'].toString() == _selectedProgramId);
 
+      int? finalDeptId;
+      if (_selectedDepartmentId != null) {
+        try {
+           final dept = _departments.firstWhere((d) => d['unique_id'].toString() == _selectedDepartmentId);
+           finalDeptId = dept['id'];
+        } catch (e) {
+          debugPrint("Could not resolve internal department ID from unique_id $_selectedDepartmentId");
+        }
+      }
+
       await ApiService().registerStudent(
         name: _nameController.text.trim(),
         studentId: fullRollNo,
         program: program['name'], // Backward compatibility: sending name
         major: program['name'], // Using program name as major for now
-        departmentId: _selectedDepartmentId != null ? int.parse(_selectedDepartmentId!) : null,
+        departmentId: finalDeptId,
         images: _capturedImages,
       );
 
@@ -265,7 +276,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       value: _selectedDepartmentId,
                       decoration: const InputDecoration(labelText: 'Department (Auto-Selected)', border: OutlineInputBorder(), filled: true, fillColor: Colors.black12),
                       items: _departments.map<DropdownMenuItem<String>>((d) {
-                        return DropdownMenuItem(value: d['id'].toString(), child: Text(d['name']));
+                        return DropdownMenuItem(value: d['unique_id'].toString(), child: Text(d['name']));
                       }).toList(),
                       onChanged: null, // Read-only
                     ),

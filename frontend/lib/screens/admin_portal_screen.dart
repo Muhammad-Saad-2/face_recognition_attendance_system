@@ -88,71 +88,112 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Header - Light theme with user info on right
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+          // Header - Light theme with user info on right (responsive)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              
+              return Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 12 : 24,
+                  vertical: isMobile ? 12 : 16,
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // User info on the right
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade200),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade300, width: 1),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Colors.blueAccent.shade100,
-                        child: Icon(Icons.person, color: Colors.blueAccent.shade700, size: 18),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        userName,
-                        style: TextStyle(
-                          color: Colors.grey.shade800,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // User info on the right
+                    Flexible(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 8 : 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircleAvatar(
+                              radius: isMobile ? 14 : 16,
+                              backgroundColor: Colors.blueAccent.shade100,
+                              child: Icon(
+                                Icons.person,
+                                color: Colors.blueAccent.shade700,
+                                size: isMobile ? 16 : 18,
+                              ),
+                            ),
+                            if (!isMobile) const SizedBox(width: 12),
+                            if (!isMobile)
+                              Flexible(
+                                child: Text(
+                                  userName,
+                                  style: TextStyle(
+                                    color: Colors.grey.shade800,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            SizedBox(width: isMobile ? 8 : 16),
+                            if (!isMobile)
+                              Container(
+                                height: 24,
+                                width: 1,
+                                color: Colors.grey.shade300,
+                              ),
+                            if (!isMobile) const SizedBox(width: 8),
+                            // Logout button
+                            isMobile
+                                ? IconButton(
+                                    onPressed: _logout,
+                                    icon: Icon(
+                                      Icons.logout,
+                                      color: Colors.red.shade700,
+                                      size: 20,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  )
+                                : TextButton.icon(
+                                    onPressed: _logout,
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red.shade700,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                    icon: const Icon(Icons.logout, size: 18),
+                                    label: const Text(
+                                      'Logout',
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                  ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Container(
-                        height: 24,
-                        width: 1,
-                        color: Colors.grey.shade300,
-                      ),
-                      const SizedBox(width: 8),
-                      TextButton.icon(
-                        onPressed: _logout,
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red.shade700,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                        icon: const Icon(Icons.logout, size: 18),
-                        label: const Text('Logout', style: TextStyle(fontSize: 14)),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
           
           // Main Content

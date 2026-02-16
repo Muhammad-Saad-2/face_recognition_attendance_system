@@ -32,7 +32,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
     final emailController = TextEditingController(text: admin?['email'] ?? '');
     final passwordController = TextEditingController();
 
-    String roleSource = 'Faculty'; // 'Faculty' or 'Manual'
+    String roleSource = 'Faculty'; // Default to Faculty
     String? facultyName;
 
     // Permissions
@@ -45,7 +45,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
     };
 
     if (isEditing) {
-      // In edit mode, we don't change source, just edit fields
+      // In edit mode, usually we keep it manual or based on existing data
       roleSource = 'Manual'; 
       try {
         final perms = await _api.getAdminPermissions(admin!['id']);
@@ -83,7 +83,8 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                       setState(() {
                         nameController.text = faculty['name'];
                         emailController.text = faculty['email'];
-                        usernameController.text = faculty['faculty_id'] ?? id; // Use ID as username by default
+                        // Auto-suggest username from faculty ID or email prefix? 
+                        // User requested manual username entry after auto-fill.
                         facultyName = faculty['name'];
                       });
                       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Found: ${faculty['name']}')));
@@ -91,7 +92,6 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                        setState(() {
                         nameController.clear();
                         emailController.clear();
-                        usernameController.clear();
                         facultyName = null;
                       });
                       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Faculty ID not found')));
@@ -120,30 +120,31 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (!isEditing) ...[
-                             Row(
-                              children: [
-                                const Text("Role Source: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 10),
-                                DropdownButton<String>(
-                                  value: roleSource,
-                                  items: ['Faculty', 'Manual'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                                  onChanged: (val) {
-                                    setState(() {
-                                      roleSource = val!;
-                                      // Clear fields on switch
-                                      if (roleSource == 'Faculty') {
-                                        usernameController.clear();
-                                        nameController.clear();
-                                        emailController.clear();
-                                      }
-                                    });
-                                  }
-                                ),
-                              ],
+                             // Admin Type Dropdown
+                             DropdownButtonFormField<String>(
+                               value: roleSource,
+                               decoration: InputDecoration(
+                                 labelText: 'Admin Type',
+                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                               ),
+                               items: ['Faculty'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                               onChanged: (val) {
+                                 setState(() {
+                                   roleSource = val!;
+                                   // Reset fields
+                                   usernameController.clear();
+                                   nameController.clear();
+                                   emailController.clear();
+                                   facultyIdController.clear();
+                                   facultyName = null;
+                                 });
+                               }
                              ),
                              const SizedBox(height: 16),
                           ],
 
+                          // Faculty ID Lookup Logic
                           if (roleSource == 'Faculty' && !isEditing) ...[
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.end,
@@ -152,7 +153,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                                   child: TextField(
                                     controller: facultyIdController,
                                     decoration: InputDecoration(
-                                      labelText: 'Faculty ID (e.g. FAC001)',
+                                      labelText: 'Faculty ID (e.g. CS-0001)',
                                       prefixIcon: const Icon(Icons.badge_outlined, size: 20),
                                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -160,7 +161,8 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                                       suffixIcon: IconButton(
                                         icon: const Icon(Icons.search),
                                         onPressed: () => lookupFaculty(facultyIdController.text),
-                                      )
+                                      ),
+                                      hintText: 'Enter ID and press enter or search'
                                     ),
                                     onSubmitted: (val) => lookupFaculty(val),
                                   ),
@@ -169,34 +171,33 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                             ),
                              const SizedBox(height: 8),
                              if (facultyName != null) 
-                               Text("Verified: $facultyName", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                               Text("✅ Verified: $facultyName", style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
                              const SizedBox(height: 16),
+                             
+                             // Read-only Name & Email
+                             _buildTextField(nameController, 'Full Name', Icons.person_outline, enabled: false),
+                             const SizedBox(height: 12),
+                             _buildTextField(emailController, 'Email Address', Icons.email_outlined, enabled: false),
+                          ] else ...[
+                             // Manual Entry (Edited or if we add other types later)
+                             _buildTextField(nameController, 'Full Name', Icons.person_outline),
+                             const SizedBox(height: 12),
+                             _buildTextField(emailController, 'Email Address', Icons.email_outlined),
+                             if (isEditing) ...[
+                                const SizedBox(height: 12),
+                                _buildTextField(facultyIdController, 'Faculty ID (Optional)', Icons.badge_outlined),
+                             ]
                           ],
 
-                          const Text('Personal Information',
+                          const SizedBox(height: 24),
+                          const Text('Account Credentials',
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                           const Divider(),
                           const SizedBox(height: 8),
                           
-                          // Username (Auto-filled or Manual)
-                          _buildTextField(usernameController, 'Username', Icons.alternate_email, 
-                            enabled: roleSource == 'Manual' || isEditing), // Editable mainly in manual/edit
+                          // Username (Manual)
+                          _buildTextField(usernameController, 'Username', Icons.alternate_email),
                           
-                          const SizedBox(height: 12),
-                          
-                          // Full Name & Faculty ID Display
-                          _buildTextField(nameController, 'Full Name', Icons.person_outline, 
-                            enabled: roleSource == 'Manual' || isEditing),
-                          
-                          if (roleSource == 'Manual' || isEditing) ...[
-                             const SizedBox(height: 12),
-                             _buildTextField(facultyIdController, 'Faculty ID (Optional)', Icons.badge_outlined),
-                          ],
-
-                          const SizedBox(height: 12),
-                          _buildTextField(emailController, 'Email Address', Icons.email_outlined,
-                             enabled: roleSource == 'Manual' || isEditing),
-                            
                           const SizedBox(height: 12),
                           _buildTextField(
                             passwordController,
@@ -384,7 +385,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                     return SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: SingleChildScrollView(
-                        child: DataTable(
+                         child: DataTable(
                           headingRowColor: MaterialStateProperty.all(Colors.grey[100]),
                           columnSpacing: 60,
                           columns: const [

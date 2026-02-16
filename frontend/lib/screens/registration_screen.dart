@@ -254,34 +254,85 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // 2. Academic Info
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: _selectedProgramId,
-                            decoration: const InputDecoration(labelText: 'Program', border: OutlineInputBorder()),
-                            items: _programs.map<DropdownMenuItem<String>>((p) {
-                              return DropdownMenuItem(
-                                value: p['id'].toString(),
-                                child: Text("${p['code']} - ${p['name']}"),
-                              );
-                            }).toList(),
-                            onChanged: _onProgramChanged,
-                            validator: (v) => v == null ? 'Required' : null,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: _selectedYear,
-                            decoration: const InputDecoration(labelText: 'Enrolled Year', border: OutlineInputBorder()),
-                            items: _years.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
-                            onChanged: _onYearChanged,
-                            validator: (v) => v == null ? 'Required' : null,
-                          ),
-                        ),
-                      ],
+                    // 2. Academic Info - Responsive layout
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isMobile = constraints.maxWidth < 600;
+                        
+                        if (isMobile) {
+                          // Stack vertically on mobile
+                          return Column(
+                            children: [
+                              DropdownButtonFormField<String>(
+                                value: _selectedProgramId,
+                                decoration: const InputDecoration(
+                                  labelText: 'Program',
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                ),
+                                isExpanded: true,
+                                items: _programs.map<DropdownMenuItem<String>>((p) {
+                                  return DropdownMenuItem(
+                                    value: p['id'].toString(),
+                                    child: Text(
+                                      "${p['code']} - ${p['name']}",
+                                      style: const TextStyle(fontSize: 13),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: _onProgramChanged,
+                                validator: (v) => v == null ? 'Required' : null,
+                              ),
+                              const SizedBox(height: 16),
+                              DropdownButtonFormField<String>(
+                                value: _selectedYear,
+                                decoration: const InputDecoration(
+                                  labelText: 'Enrolled Year',
+                                  border: OutlineInputBorder(),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                ),
+                                items: _years.map((y) => DropdownMenuItem(
+                                  value: y,
+                                  child: Text(y, style: const TextStyle(fontSize: 13)),
+                                )).toList(),
+                                onChanged: _onYearChanged,
+                                validator: (v) => v == null ? 'Required' : null,
+                              ),
+                            ],
+                          );
+                        } else {
+                          // Side by side on larger screens
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _selectedProgramId,
+                                  decoration: const InputDecoration(labelText: 'Program', border: OutlineInputBorder()),
+                                  items: _programs.map<DropdownMenuItem<String>>((p) {
+                                    return DropdownMenuItem(
+                                      value: p['id'].toString(),
+                                      child: Text("${p['code']} - ${p['name']}"),
+                                    );
+                                  }).toList(),
+                                  onChanged: _onProgramChanged,
+                                  validator: (v) => v == null ? 'Required' : null,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _selectedYear,
+                                  decoration: const InputDecoration(labelText: 'Enrolled Year', border: OutlineInputBorder()),
+                                  items: _years.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
+                                  onChanged: _onYearChanged,
+                                  validator: (v) => v == null ? 'Required' : null,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                      },
                     ),
                     const SizedBox(height: 16),
 

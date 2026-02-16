@@ -48,7 +48,7 @@ def create_user(
             detail="The user with this username already exists in the system.",
         )
     
-    user_data = user_in.dict(exclude={"password"})
+    user_data = user_in.dict(exclude={"password", "role"})
     hashed_password = get_password_hash(user_in.password)
     user = User(**user_data, hashed_password=hashed_password, role="admin")
     session.add(user)

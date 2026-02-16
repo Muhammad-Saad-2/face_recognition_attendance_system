@@ -47,7 +47,7 @@ def force_schema_reset():
                 code VARCHAR NOT NULL,
                 unique_id VARCHAR,
                 description VARCHAR,
-                department_id INTEGER REFERENCES department(id)
+                department_id VARCHAR REFERENCES department(unique_id)
             );
             CREATE UNIQUE INDEX ix_program_name ON program (name);
             CREATE UNIQUE INDEX ix_program_code ON program (code);
@@ -61,7 +61,7 @@ def force_schema_reset():
                 name VARCHAR NOT NULL,
                 email VARCHAR NOT NULL,
                 faculty_id VARCHAR,
-                department_id INTEGER REFERENCES department(id)
+                department_id VARCHAR REFERENCES department(unique_id)
             );
             CREATE INDEX ix_faculty_name ON faculty (name);
             CREATE UNIQUE INDEX ix_faculty_email ON faculty (email);

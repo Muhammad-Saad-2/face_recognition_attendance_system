@@ -6,7 +6,7 @@ class ProgramBase(SQLModel):
     code: str = Field(index=True, unique=True)
     unique_id: Optional[str] = Field(default=None, index=True, unique=True)
     description: Optional[str] = None
-    department_id: Optional[int] = Field(default=None, foreign_key="department.id")
+    department_id: Optional[str] = Field(default=None, foreign_key="department.unique_id")
 
 class Program(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -14,7 +14,7 @@ class Program(SQLModel, table=True):
     code: str = Field(index=True, unique=True)
     unique_id: Optional[str] = Field(default=None, index=True, unique=True)
     description: Optional[str] = None
-    department_id: Optional[int] = Field(default=None, foreign_key="department.id")
+    department_id: Optional[str] = Field(default=None, foreign_key="department.unique_id")
     
     # Relationships
     department: Optional["Department"] = Relationship(back_populates="programs")

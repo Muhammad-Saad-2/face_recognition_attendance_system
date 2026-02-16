@@ -3,7 +3,7 @@ from app.core.database import engine, create_db_and_tables
 from app.models.department import Department
 from app.models.program import Program
 from app.models.faculty import Faculty
-from app.core.security import get_password_hash # If creating accounts, but for Faculty model we just need basic info
+# from app.core.security import get_password_hash # Not needed for simple seed
 
 def seed_data():
     print("🌱 Seeding Academic Data...")
@@ -33,6 +33,7 @@ def seed_data():
                 session.commit()
                 session.refresh(dept)
                 print(f"✅ Created Department: {dept.name} ({dept.unique_id})")
+            # Store by code for easy lookup
             departments[dept.code] = dept
             dept_id_counter += 1
 
@@ -56,7 +57,7 @@ def seed_data():
                     prog = Program(
                         name=prog_data["name"], 
                         code=prog_data["code"], 
-                        department_id=dept.id,
+                        department_id=dept.unique_id, # Link via unique_id (String)
                         unique_id=str(prog_id_counter)
                     )
                     session.add(prog)
@@ -80,27 +81,23 @@ def seed_data():
         ]
 
         for name, email, fac_id, dept_code in faculty_list:
-            dept = departments.get(dept_code)
-            if dept:
-                # Check by faculty_id or email
-                existing_fac = session.exec(select(Faculty).where((Faculty.faculty_id == fac_id) | (Faculty.email == email))).first()
-                if not existing_fac:
-                    fac = Faculty(
-                        name=name,
-                        email=email,
-                        faculty_id=fac_id,
-                        department_id=dept.id
-                    )
-                    session.add(fac)
-                    session.commit()
-                    print(f"👤 Created Faculty: {name} ({fac_id})")
-                else:
-                    # Update faculty_id if missing
-                    if not existing_fac.faculty_id:
-                        existing_fac.faculty_id = fac_id
-                        session.add(existing_fac)
-                        session.commit()
-                        print(f"🔄 Updated Faculty ID for: {name}")
+            if dept_code not in departments:
+                continue
+                
+            dept = departments[dept_code]
+            
+            # Check by faculty_id or email
+            existing_fac = session.exec(select(Faculty).where((Faculty.faculty_id == fac_id) | (Faculty.email == email))).first()
+            if not existing_fac:
+                fac = Faculty(
+                    name=name,
+                    email=email,
+                    faculty_id=fac_id,
+                    department_id=dept.unique_id # Link via unique_id (String)
+                )
+                session.add(fac)
+                session.commit()
+                print(f"👤 Created Faculty: {name} ({fac_id})")
 
     print("🚀 Seeding Complete!")
 

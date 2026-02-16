@@ -48,9 +48,9 @@ def create_user(
             detail="The user with this username already exists in the system.",
         )
     
-    user = User.from_orm(user_in)
-    user.hashed_password = get_password_hash(user_in.password)
-    user.role = "admin" # Enforce admin role creation here
+    user_data = user_in.dict(exclude={"password"})
+    hashed_password = get_password_hash(user_in.password)
+    user = User(**user_data, hashed_password=hashed_password, role="admin")
     session.add(user)
     session.commit()
     session.refresh(user)

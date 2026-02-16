@@ -51,6 +51,7 @@ def login_access_token(
         "user": {
             "id": user.id,
             "username": user.username,
+            "full_name": user.full_name,
             "role": user.role,
             "is_super_admin": user.is_super_admin,
             "permissions": permissions

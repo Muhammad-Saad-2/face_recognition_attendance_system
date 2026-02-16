@@ -51,9 +51,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ApiService().getPrograms(),
         ApiService().getDepartments(),
       ]);
+      
+      // Deduplicate departments by unique_id to prevent dropdown errors
+      final allDepartments = futures[1] as List<dynamic>;
+      final seenIds = <String>{};
+      final uniqueDepartments = <dynamic>[];
+      
+      for (var dept in allDepartments) {
+        final uniqueId = dept['unique_id']?.toString();
+        if (uniqueId != null && !seenIds.contains(uniqueId)) {
+          seenIds.add(uniqueId);
+          uniqueDepartments.add(dept);
+        }
+      }
+      
       setState(() {
         _programs = futures[0] as List<dynamic>;
-        _departments = futures[1] as List<dynamic>;
+        _departments = uniqueDepartments;
         _isLoadingData = false;
       });
     } catch (e) {

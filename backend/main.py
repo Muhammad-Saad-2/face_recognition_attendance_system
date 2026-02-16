@@ -7,9 +7,9 @@ from app.api.v1.router import api_router
 
 # Auto-seed data on startup
 try:
-    from seed_full_academic_data import seed_data
+    from fix_schema_on_startup import fix_and_seed
 except ImportError:
-    seed_data = None
+    fix_and_seed = None
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
@@ -24,10 +24,11 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def on_startup():
-    create_db_and_tables()
-    if seed_data:
-        print("🌱 Running auto-seeding on startup...")
-        seed_data()
+    if fix_and_seed:
+        print("🌱 Running schema check and auto-seeding...")
+        fix_and_seed()
+    else:
+        create_db_and_tables()
 
 @app.get("/")
 def read_root():

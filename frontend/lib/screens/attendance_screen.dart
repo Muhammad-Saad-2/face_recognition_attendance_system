@@ -55,23 +55,36 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
 
       if (!mounted) return;
       
+      final List<dynamic> students = result['students'] ?? [];
+
       // Show Success Dialog
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Row(children: [Icon(Icons.check_circle, color: Colors.green), SizedBox(width: 8), Text('Attendance Marked')]),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Name: ${result['student_name'] ?? 'Unknown'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 8),
-              Text('ID: ${result['student_id'] ?? '-'}'),
-              Text('Time: ${result['timestamp'] ?? '-'}'),
-              const SizedBox(height: 8),
-              if (result['status'] != null)
-                Text('Status: ${result['status']}', style: TextStyle(color: result['status'] == 'Present' ? Colors.green : Colors.orange, fontWeight: FontWeight.bold)),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: students.isNotEmpty 
+                ? students.map<Widget>((s) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Name: ${s['name'] ?? 'Unknown'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                        const SizedBox(height: 4),
+                        Text('ID: ${s['student_id'] ?? '-'}'),
+                        const SizedBox(height: 4),
+                        Text('Program: ${s['program'] ?? '-'}'),
+                        const SizedBox(height: 4),
+                        Text('Department: ${s['major'] ?? '-'}'), // Major is often used as department here
+                        if (students.length > 1) const Divider(),
+                      ],
+                    ),
+                  )).toList()
+                : [const Text('No registered students recognized.')],
+            ),
           ),
           actions: [
             TextButton(

@@ -88,8 +88,9 @@ def create_faculty(
     
     # Auto-generate faculty_id
     if not faculty_in.faculty_id:
+        from sqlmodel import select
         from app.models.department import Department
-        dept = session.get(Department, faculty_in.department_id)
+        dept = session.exec(select(Department).where(Department.unique_id == faculty_in.department_id)).first()
         if not dept:
             raise HTTPException(status_code=400, detail="Invalid Department ID")
         

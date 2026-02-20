@@ -33,6 +33,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   // Camera
   List<XFile> _capturedImages = [];
   CameraController? _cameraController;
+  List<CameraDescription>? _cameras;
+  int _selectedCameraIndex = 0;
   bool _isCameraInitialized = false;
   bool _isSubmitting = false;
 
@@ -79,21 +81,36 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   Future<void> _initializeCamera() async {
-    final cameras = await availableCameras();
-    if (cameras.isEmpty) return;
+    _cameras = await availableCameras();
+    if (_cameras == null || _cameras!.isEmpty) return;
     
+    await _setCamera(_cameras![_selectedCameraIndex]);
+  }
+
+  Future<void> _setCamera(CameraDescription cameraDescription) async {
+    _cameraController?.dispose();
     _cameraController = CameraController(
-      cameras.first,
+      cameraDescription,
       ResolutionPreset.medium,
       enableAudio: false,
     );
     
     try {
       await _cameraController!.initialize();
-      if (mounted) setState(() => _isCameraInitialized = true);
+      if (mounted) {
+        setState(() => _isCameraInitialized = true);
+      }
     } catch (e) {
       debugPrint('Camera Error: $e');
     }
+  }
+
+  void _flipCamera() {
+    if (_cameras == null || _cameras!.length < 2) return;
+    _selectedCameraIndex = (_selectedCameraIndex + 1) % _cameras!.length;
+    _isCameraInitialized = false;
+    setState(() {});
+    _setCamera(_cameras![_selectedCameraIndex]);
   }
 
   @override
@@ -377,13 +394,28 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     // 5. Face Capture
                     const Text('Face Capture (Min 3, Max 5)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    if (_isCameraInitialized) 
-                      SizedBox(
-                        height: 300,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CameraPreview(_cameraController!),
-                        ),
+                    if (_isCameraInitialized && _cameraController != null) 
+                      Stack(
+                        children: [
+                          SizedBox(
+                            height: 300,
+                            width: double.infinity,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: CameraPreview(_cameraController!),
+                            ),
+                          ),
+                          if (!kIsWeb && (_cameras?.length ?? 0) > 1)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: IconButton(
+                                icon: const Icon(Icons.flip_camera_android, color: Colors.white, size: 30),
+                                onPressed: _flipCamera,
+                                style: IconButton.styleFrom(backgroundColor: Colors.black54),
+                              ),
+                            ),
+                        ],
                       )
                     else 
                       Container(height: 300, color: Colors.black12, child: const Center(child: Text('Camera initializing...'))),

@@ -24,11 +24,11 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
     });
   }
 
-  Future<void> _deleteStudent(int id) async {
+  Future<void> _deleteStudent(String id) async {
     if (!await _showConfirmationDialog('Delete Student', 'Are you sure you want to delete this student?')) return;
 
     try {
-      await _api.deleteStudent(id.toString());
+      await _api.deleteStudent(id);
       _refresh();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Student deleted successfully')));
     } catch (e) {
@@ -88,7 +88,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                     'current_semester': currentSemester,
                   };
                   if (isEditing) {
-                    await _api.updateStudent(student!['id'], data);
+                    await _api.updateStudent(student!['student_id'], data);
                   } else {
                     // Note: Registration usually happens via specific flow with images, but for admin edit/add simple:
                     // Only update is fully supported via this dialog in current API structure for "full" student.
@@ -105,7 +105,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please use Registration Screen to add new students with File/Images.')));
                        return;
                     }
-                     await _api.updateStudent(student!['id'], data);
+                     await _api.updateStudent(student!['student_id'], data);
                   }
                   if (mounted) {
                     Navigator.pop(context);
@@ -192,7 +192,7 @@ class _StudentManagementScreenState extends State<StudentManagementScreen> {
                                 ),
                                 IconButton(
                                   icon: Icon(Icons.delete, size: 20, color: ApiService.hasPermission('can_manage_students') ? Colors.red : Colors.grey),
-                                  onPressed: ApiService.hasPermission('can_manage_students') ? () => _deleteStudent(s['id']) : null,
+                                  onPressed: ApiService.hasPermission('can_manage_students') ? () => _deleteStudent(s['student_id']) : null,
                                   tooltip: ApiService.hasPermission('can_manage_students') ? 'Delete' : 'No Permission',
                                 ),
                               ],

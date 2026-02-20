@@ -26,7 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _reportFuture = _api.getDailyReport();
+    _reportFuture = _api.getAllAttendanceReports();
   }
 
   @override
@@ -39,7 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Daily Attendance Overview',
+              'All Attendance Overview',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
@@ -52,7 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No attendance records for today.'));
+                    return const Center(child: Text('No attendance records found.'));
                   }
 
                   final allReports = snapshot.data!;
@@ -95,7 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                            decoration: BoxDecoration(
                              color: Colors.white,
                              borderRadius: BorderRadius.circular(12),
-                             boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+                             boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
                            ),
                            child: Row(
                              children: [
@@ -146,6 +146,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                        ),
                      ]
                   );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFilterBar() {
     return Row(
       children: [

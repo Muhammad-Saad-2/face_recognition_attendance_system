@@ -106,17 +106,17 @@ class ApiService {
     }
   }
 
-  Future<List<Attendance>> getDailyReport() async {
+  Future<List<Attendance>> getAllAttendanceReports() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/api/v1/reports/daily'),
+      Uri.parse('$baseUrl/api/v1/attendance/get_attendance_records'),
       headers: _headers,
     );
 
     if (response.statusCode == 200) {
-      Iterable l = jsonDecode(response.body);
+      Iterable l = jsonDecode(response.body)['records'];
       return List<Attendance>.from(l.map((model) => Attendance.fromJson(model)));
     } else {
-      throw Exception('Failed to load report');
+      throw Exception('Failed to load records: ${response.body}');
     }
   }
 

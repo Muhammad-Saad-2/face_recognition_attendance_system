@@ -33,6 +33,26 @@ def fix_and_seed():
                 session.exec(text("DROP TABLE course CASCADE"))
                 session.commit()
     
+    # Check student table
+    if inspector.has_table("student"):
+        columns = inspector.get_columns("student")
+        batch_col = next((c for c in columns if c["name"] == "batch"), None)
+        if not batch_col:
+            print("⚠️ Adding batch column to student table...")
+            with Session(engine) as session:
+                session.exec(text("ALTER TABLE student ADD COLUMN batch VARCHAR DEFAULT 'Unknown';"))
+                session.commit()
+
+    # Check attendance table
+    if inspector.has_table("attendance"):
+        columns = inspector.get_columns("attendance")
+        batch_col = next((c for c in columns if c["name"] == "batch"), None)
+        if not batch_col:
+            print("⚠️ Adding batch column to attendance table...")
+            with Session(engine) as session:
+                session.exec(text("ALTER TABLE attendance ADD COLUMN batch VARCHAR DEFAULT 'Unknown';"))
+                session.commit()
+                
     # Run creation (will recreate Course if dropped)
     create_db_and_tables()
     

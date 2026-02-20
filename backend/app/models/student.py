@@ -8,6 +8,7 @@ class StudentBase(SQLModel):
     student_id: str = Field(index=True, unique=True)
     program: str
     major: str
+    batch: str = Field(default="Unknown")
     # New fields for better management
     current_semester: int = Field(default=1)
     department_id: Optional[int] = Field(default=None, foreign_key="department.id")

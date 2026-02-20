@@ -4,6 +4,7 @@ class Attendance {
   final String name;
   final String program;
   final String major;
+  final String batch;
   final String date;
   final String time;
   final String status;
@@ -14,6 +15,7 @@ class Attendance {
     required this.name,
     required this.program,
     required this.major,
+    required this.batch,
     required this.date,
     required this.time,
     required this.status,
@@ -26,6 +28,7 @@ class Attendance {
       name: json['name'],
       program: json['program'],
       major: json['major'],
+      batch: json['batch'] ?? 'Unknown',
       date: json['date'],
       time: json['time'],
       status: json['status'],

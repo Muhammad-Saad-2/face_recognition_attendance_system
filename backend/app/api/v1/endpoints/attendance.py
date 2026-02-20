@@ -121,15 +121,16 @@ async def download_attendance(session: Session = Depends(get_session)):
         wb = Workbook()
         ws = wb.active
         ws.title = "Attendance"
-        ws.append(["Name", "Student ID", "Program", "Major", "Date", "Time", "Status"])
+        ws.append(["Name", "Student ID", "Program", "Major", "Batch", "Date", "Time", "Status"])
         
         ws.column_dimensions['A'].width = 20
         ws.column_dimensions['B'].width = 15
         ws.column_dimensions['C'].width = 15
         ws.column_dimensions['D'].width = 20
-        ws.column_dimensions['E'].width = 15
+        ws.column_dimensions['E'].width = 10
         ws.column_dimensions['F'].width = 15
-        ws.column_dimensions['G'].width = 10
+        ws.column_dimensions['G'].width = 15
+        ws.column_dimensions['H'].width = 10
 
         for record in records:
             ws.append([
@@ -137,6 +138,7 @@ async def download_attendance(session: Session = Depends(get_session)):
                 record.student_id,
                 record.program,
                 record.major,
+                record.batch,
                 str(record.date),
                 str(record.time).split('.')[0], # Remove microseconds if present
                 record.status
@@ -175,6 +177,7 @@ def create_attendance_manual(
         name=student.name,
         program=student.program,
         major=student.major,
+        batch=student.batch,
         date=attendance_in.date,
         time=attendance_in.time,
         status=attendance_in.status

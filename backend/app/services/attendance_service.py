@@ -13,6 +13,7 @@ class AttendanceService:
             name=student.name,
             program=student.program,
             major=student.major,
+            batch=student.batch,
             date=now.date(),
             time=now.time(),
             status="Present"

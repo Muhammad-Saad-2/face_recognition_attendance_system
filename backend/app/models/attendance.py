@@ -13,6 +13,7 @@ class Attendance(SQLModel, table=True):
     name: str
     program: str
     major: str
+    batch: str = Field(default="Unknown")
     date: date
     time: time
     status: str = "Present"

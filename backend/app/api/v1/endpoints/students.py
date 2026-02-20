@@ -100,6 +100,7 @@ async def register_student(
     student_id: str = Form(...),
     program: str = Form(...),
     major: str = Form(...),
+    batch: str = Form(default="Unknown"),
     department_id: Optional[int] = Form(None),
     images: List[UploadFile] = File(...),
     session: Session = Depends(get_session)
@@ -125,6 +126,7 @@ async def register_student(
         student_id=student_id, 
         program=program, 
         major=major,
+        batch=batch,
         department_id=department_id
     )
 

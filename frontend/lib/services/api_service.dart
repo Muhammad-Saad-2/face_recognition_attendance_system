@@ -52,6 +52,7 @@ class ApiService {
     required String studentId,
     required String program,
     required String major,
+    required String batch,
     int? departmentId,
     required List<XFile> images,
   }) async {
@@ -63,6 +64,7 @@ class ApiService {
     request.fields['student_id'] = studentId;
     request.fields['program'] = program;
     request.fields['major'] = major;
+    request.fields['batch'] = batch;
     if (departmentId != null) {
       request.fields['department_id'] = departmentId.toString();
     }

@@ -233,6 +233,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         studentId: fullRollNo,
         program: program['name'], // Backward compatibility: sending name
         major: program['name'], // Using program name as major for now
+        batch: _selectedYear ?? 'Unknown',
         departmentId: finalDeptId,
         images: _capturedImages,
       );

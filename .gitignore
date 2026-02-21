@@ -51,5 +51,5 @@ app.*.map.json
 /backend/temp_*
 
 /frontend/assets
-/frontend/build
+# /frontend/build
 /frontend/ios/

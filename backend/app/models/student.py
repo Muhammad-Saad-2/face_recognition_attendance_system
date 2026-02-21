@@ -30,6 +30,8 @@ class StudentUpdate(SQLModel):
     name: Optional[str] = None
     program: Optional[str] = None
     major: Optional[str] = None
+    batch: Optional[str] = None
+    current_semester: Optional[int] = None
     department_id: Optional[int] = None
 
 class StudentRead(StudentBase):

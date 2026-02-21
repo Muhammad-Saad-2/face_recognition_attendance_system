@@ -28,10 +28,7 @@ class _AttendanceManagementScreenState extends State<AttendanceManagementScreen>
   Future<void> _fetchAttendance() async {
     setState(() => _isLoading = true);
     try {
-      final reports = await _api.getDailyReport(); // Initially convert this to get all if needed, but daily is a start
-      // Actually per requirements, we might need a general get all, but let's stick to daily report for now or check if there is an endpoint for all history.
-      // The requirement says "filterable by Date". The daily report endpoint takes a date.
-      // But for now let's use getDailyReport which defaults to today, and maybe add date picker to fetch other dates.
+      final reports = await _api.getAllAttendanceReports();
       
       setState(() {
         _attendanceList = reports;

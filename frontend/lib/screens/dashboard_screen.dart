@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../services/api_service.dart';
 import '../models/attendance_model.dart';
-import 'dart:math';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,234 +11,224 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _api = ApiService();
-  late Future<List<Attendance>> _reportFuture;
-
-  // Filters State
-  String? _selectedBatch;
-  String? _selectedProgram;
-
-  // Cached Filter Options
-  Set<String> _availableBatches = {};
-  Set<String> _availablePrograms = {};
+  List<Attendance> _records = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _reportFuture = _api.getAllAttendanceReports();
+    _fetchRecords();
+  }
+
+  Future<void> _fetchRecords() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final records = await _api.getAllAttendanceReports();
+      setState(() {
+        _records = records;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('MIS Dashboard')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
+      appBar: AppBar(
+        title: const Text('Recent Activity'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchRecords,
+            tooltip: 'Refresh',
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _fetchRecords,
+        child: _buildBody(),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              'All Attendance Overview',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 12),
+            Text('Failed to load records', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(_error!, style: const TextStyle(color: Colors.grey), textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _fetchRecords,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
             ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: FutureBuilder<List<Attendance>>(
-                future: _reportFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No attendance records found.'));
-                  }
+          ],
+        ),
+      );
+    }
 
-                  final allReports = snapshot.data!;
+    if (_records.isEmpty) {
+      return ListView(
+        // Wrap in ListView so RefreshIndicator works even when empty
+        children: const [
+          SizedBox(height: 160),
+          Center(
+            child: Column(
+              children: [
+                Icon(Icons.history, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  'No attendance records yet.',
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Mark attendance using the camera to see activity here.',
+                  style: TextStyle(color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
 
-                  // Extract available filters dynamically
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    final batches = allReports.map((e) => e.batch).toSet();
-                    final programs = allReports.map((e) => e.program).toSet();
-                    if (batches.length != _availableBatches.length || programs.length != _availablePrograms.length) {
-                       setState(() {
-                         _availableBatches = batches;
-                         _availablePrograms = programs;
-                       });
-                    }
-                  });
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: _records.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) => _AttendanceCard(record: _records[index]),
+    );
+  }
+}
 
-                  // Apply filters
-                  final filteredReports = allReports.where((r) {
-                    final batchMatch = _selectedBatch == null || _selectedBatch == 'All' || r.batch == _selectedBatch;
-                    final programMatch = _selectedProgram == null || _selectedProgram == 'All' || r.program == _selectedProgram;
-                    return batchMatch && programMatch;
-                  }).toList();
+class _AttendanceCard extends StatelessWidget {
+  final Attendance record;
+  const _AttendanceCard({required this.record});
 
-                  // Calculate stats for chart
-                  Map<String, int> programCounts = {};
-                  for (var r in filteredReports) {
-                     programCounts[r.program] = (programCounts[r.program] ?? 0) + 1;
-                  }
+  @override
+  Widget build(BuildContext context) {
+    final isPresent = record.status.toLowerCase() == 'present';
+    final statusColor = isPresent ? Colors.green : Colors.red;
+    final timeShort = record.time.split('.').first; // Remove microseconds
 
-                  return Column(
-                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                     children: [
-                       _buildFilterBar(),
-                       const SizedBox(height: 24),
-                       // Chart Container
-                       if (filteredReports.isNotEmpty)
-                         Container(
-                           height: 250,
-                           padding: const EdgeInsets.all(16),
-                           decoration: BoxDecoration(
-                             color: Colors.white,
-                             borderRadius: BorderRadius.circular(12),
-                             boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
-                           ),
-                           child: Row(
-                             children: [
-                               Expanded(child: _buildPieChart(programCounts)),
-                               const SizedBox(width: 24),
-                               Expanded(child: _buildChartLegend(programCounts)),
-                             ],
-                           )
-                         ),
-                       const SizedBox(height: 24),
-                       const Text('Recent Records', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                       const SizedBox(height: 12),
-                       Expanded(
-                         child: Card(
-                           child: SingleChildScrollView(
-                             scrollDirection: Axis.horizontal,
-                             child: DataTable(
-                               columns: const [
-                                 DataColumn(label: Text('Name')),
-                                 DataColumn(label: Text('ID')),
-                                 DataColumn(label: Text('Program')),
-                                 DataColumn(label: Text('Batch')),
-                                 DataColumn(label: Text('Time')),
-                                 DataColumn(label: Text('Status')),
-                               ],
-                               rows: filteredReports.map((a) => DataRow(
-                                 cells: [
-                                   DataCell(Text(a.name)),
-                                   DataCell(Text(a.studentId)),
-                                   DataCell(Text(a.program)),
-                                   DataCell(Text(a.batch)),
-                                   DataCell(Text(a.time.split('.').first)),
-                                   DataCell(
-                                     Container(
-                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                       decoration: BoxDecoration(
-                                         color: Colors.green.shade100,
-                                         borderRadius: BorderRadius.circular(4),
-                                       ),
-                                       child: Text(a.status, style: const TextStyle(color: Colors.green)),
-                                     ),
-                                   ),
-                                 ],
-                               )).toList(),
-                             ),
-                           ),
-                         ),
-                       ),
-                     ]
-                  );
-                },
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Avatar
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: statusColor.withOpacity(0.12),
+              child: Icon(
+                isPresent ? Icons.check_circle : Icons.cancel,
+                color: statusColor,
+                size: 28,
               ),
+            ),
+            const SizedBox(width: 16),
+
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    record.name,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    record.studentId,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _Chip(label: record.program.length > 20 ? record.program.substring(0, 20) + '…' : record.program, color: Colors.indigo),
+                      const SizedBox(width: 6),
+                      _Chip(label: record.batch, color: Colors.blueGrey),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Date + Status
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  record.date,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  timeShort,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    record.status,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildFilterBar() {
-    return Row(
-      children: [
-        Expanded(
-          child: DropdownButtonFormField<String>(
-            decoration: const InputDecoration(labelText: 'Filter by Batch', border: OutlineInputBorder()),
-            value: _selectedBatch,
-            items: ['All', ..._availableBatches].map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
-            onChanged: (val) {
-              setState(() {
-                _selectedBatch = val;
-              });
-            },
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: DropdownButtonFormField<String>(
-            decoration: const InputDecoration(labelText: 'Filter by Program', border: OutlineInputBorder()),
-            value: _selectedProgram,
-            items: ['All', ..._availablePrograms].map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
-            onChanged: (val) {
-              setState(() {
-                _selectedProgram = val;
-              });
-            },
-          ),
-        ),
-      ],
-    );
-  }
+class _Chip extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _Chip({required this.label, required this.color});
 
-  Widget _buildPieChart(Map<String, int> data) {
-    if (data.isEmpty) return const Center(child: Text("No data to chart"));
-    List<PieChartSectionData> sections = [];
-    int i = 0;
-    data.forEach((program, count) {
-      final color = Colors.primaries[i % Colors.primaries.length];
-      sections.add(
-        PieChartSectionData(
-          color: color,
-          value: count.toDouble(),
-          title: '$count',
-          radius: 80,
-          titleStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-        )
-      );
-      i++;
-    });
-
-    return PieChart(
-      PieChartData(
-        sectionsSpace: 2,
-        centerSpaceRadius: 10,
-        sections: sections,
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
       ),
-    );
-  }
-
-  Widget _buildChartLegend(Map<String, int> data) {
-    List<Widget> legends = [];
-    int i = 0;
-    data.forEach((program, count) {
-      final color = Colors.primaries[i % Colors.primaries.length];
-      legends.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              Container(width: 16, height: 16, color: color),
-              const SizedBox(width: 8),
-              Expanded(child: Text(program, overflow: TextOverflow.ellipsis)),
-              Text('($count)'),
-            ],
-          ),
-        )
-      );
-      i++;
-    });
-    
-    return SingleChildScrollView(
-       child: Column(
-         crossAxisAlignment: CrossAxisAlignment.start,
-         mainAxisAlignment: MainAxisAlignment.center,
-         children: legends,
-       )
+      child: Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
     );
   }
 }

@@ -54,6 +54,7 @@ class ApiService {
     required String major,
     required String batch,
     int? departmentId,
+    int currentSemester = 1,
     required List<XFile> images,
   }) async {
     var uri = Uri.parse('$baseUrl/api/v1/students/register');
@@ -65,6 +66,7 @@ class ApiService {
     request.fields['program'] = program;
     request.fields['major'] = major;
     request.fields['batch'] = batch;
+    request.fields['current_semester'] = currentSemester.toString();
     if (departmentId != null) {
       request.fields['department_id'] = departmentId.toString();
     }

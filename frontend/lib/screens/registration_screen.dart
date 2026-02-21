@@ -29,6 +29,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   
   // Computed
   String _rollNoPrefix = "";
+  int _calculatedSemester = 1;
 
   // Camera
   List<XFile> _capturedImages = [];
@@ -146,10 +147,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
   }
 
+  /// Calculates the current semester based on enrolled year.
+  /// 2 semesters per year: Fall (Aug-Dec) = odd, Spring (Jan-Jul) = even.
+  int _calculateSemester(int enrolledYear) {
+    final now = DateTime.now();
+    final yearsElapsed = now.year - enrolledYear;
+    int semester = yearsElapsed * 2;
+    if (now.month >= 8) semester += 1; // Fall semester has started
+    return semester.clamp(1, 8);
+  }
+
   void _onYearChanged(String? year) {
     setState(() {
       _selectedYear = year;
       _updateRollNoPrefix();
+      if (year != null) {
+        _calculatedSemester = _calculateSemester(int.parse(year));
+      }
     });
   }
 
@@ -231,10 +245,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       await ApiService().registerStudent(
         name: _nameController.text.trim(),
         studentId: fullRollNo,
-        program: program['name'], // Backward compatibility: sending name
-        major: program['name'], // Using program name as major for now
-        batch: _selectedYear ?? 'Unknown',
+        program: program['name'],
+        major: program['name'],
+        batch: _selectedYear != null ? 'Fall-$_selectedYear' : 'Unknown',
         departmentId: finalDeptId,
+        currentSemester: _calculatedSemester,
         images: _capturedImages,
       );
 
@@ -354,7 +369,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // 3. Department (Read-only)
+                    // 3. Current Semester (auto-calculated, read-only)
+                    TextFormField(
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: 'Current Semester (Auto-Calculated)',
+                        border: const OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.black12,
+                        suffixIcon: const Icon(Icons.school_outlined),
+                        hintText: _selectedYear == null ? 'Select Enrolled Year first' : null,
+                      ),
+                      controller: TextEditingController(
+                        text: _selectedYear == null ? '' : 'Semester $_calculatedSemester',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 4. Department (Read-only)
                     DropdownButtonFormField<String>(
                       value: _selectedDepartmentId,
                       decoration: const InputDecoration(labelText: 'Department (Auto-Selected)', border: OutlineInputBorder(), filled: true, fillColor: Colors.black12),

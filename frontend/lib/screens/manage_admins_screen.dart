@@ -83,8 +83,7 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                       setState(() {
                         nameController.text = faculty['name'];
                         emailController.text = faculty['email'];
-                        // Auto-suggest username from faculty ID or email prefix? 
-                        // User requested manual username entry after auto-fill.
+                        usernameController.text = faculty['faculty_id'] ?? facultyIdController.text;
                         facultyName = faculty['name'];
                       });
                       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Found: ${faculty['name']}')));
@@ -194,9 +193,13 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
                           const Divider(),
                           const SizedBox(height: 8),
-                          
-                          // Username (Manual)
-                          _buildTextField(usernameController, 'Username', Icons.alternate_email),
+                                                    // Username (auto-filled from Faculty ID when in Faculty mode, otherwise manual)
+                           _buildTextField(
+                             usernameController,
+                             'Username',
+                             Icons.alternate_email,
+                             enabled: !(roleSource == 'Faculty' && !isEditing),
+                           ),
                           
                           const SizedBox(height: 12),
                           _buildTextField(

@@ -30,7 +30,7 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
+# /build/
 /coverage/
 
 # Symbolication related
@@ -51,5 +51,6 @@ app.*.map.json
 /backend/temp_*
 
 /frontend/assets
-# /frontend/build
+/frontend/build/*
+!/frontend/build/web/
 /frontend/ios/

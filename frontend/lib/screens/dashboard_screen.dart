@@ -78,45 +78,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // SHARED DASHBOARD — Charts + Filters + DataTable
   // ──────────────────────────────────────────────
   Widget _buildDashboardContent() {
-    return Container(
-      color: Colors.grey[50],
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Attendance Dashboard',
-                      style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87)),
-                  Text('Overview of all attendance records',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-                ],
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: 'Refresh',
-                onPressed: _fetchRecords,
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          if (_isLoading)
-            const Expanded(child: Center(child: CircularProgressIndicator()))
-          else if (_error != null)
-            Expanded(child: _buildError())
-          else if (_records.isEmpty)
-            const Expanded(
+    return ColoredBox(
+      color: Colors.grey[50]!,
+      child: SingleChildScrollView(
+        primary: true,
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Attendance Dashboard',
+                        style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87)),
+                    Text('Overview of all attendance records',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: 'Refresh',
+                  onPressed: _fetchRecords,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            if (_isLoading)
+              const SizedBox(
+                height: 200,
+                child: Center(child: CircularProgressIndicator()))
+            else if (_error != null)
+              _buildError()
+            else if (_records.isEmpty)
+              const SizedBox(
+                height: 200,
                 child: Center(child: Text('No attendance records yet.')))
-          else
-            Expanded(child: _buildWebContent()),
-        ],
+            else
+              _buildWebContent(),
+          ],
+        ),
       ),
     );
   }
@@ -246,76 +252,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 24),
 
         // ── DataTable of Records ──
-        Expanded(
-          child: Card(
-            elevation: 2,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SingleChildScrollView(
-                  child: DataTable(
-                    headingRowColor:
-                        MaterialStateProperty.all(Colors.grey[100]),
-                    columnSpacing: 40,
-                    columns: const [
-                      DataColumn(
-                          label: Text('NAME',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('ID',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('PROGRAM',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('BATCH',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('DATE',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('TIME',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                      DataColumn(
-                          label: Text('STATUS',
-                              style: TextStyle(fontWeight: FontWeight.bold))),
-                    ],
-                    rows: filtered.map((a) {
-                      final isPresent =
-                          a.status.toLowerCase() == 'present';
-                      return DataRow(cells: [
-                        DataCell(Text(a.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w500))),
-                        DataCell(Text(a.studentId)),
-                        DataCell(Text(a.program)),
-                        DataCell(Text(a.batch)),
-                        DataCell(Text(a.date)),
-                        DataCell(Text(a.time.split('.').first)),
-                        DataCell(Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isPresent
-                                ? Colors.green.shade100
-                                : Colors.red.shade100,
-                            borderRadius: BorderRadius.circular(20),
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: double.infinity),
+                child: DataTable(
+                  headingRowColor:
+                      MaterialStateProperty.all(Colors.grey[100]),
+                  columnSpacing: 40,
+                  columns: const [
+                    DataColumn(
+                        label: Text('NAME',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('ID',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('PROGRAM',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('BATCH',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('DATE',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('TIME',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataColumn(
+                        label: Text('STATUS',
+                            style: TextStyle(fontWeight: FontWeight.bold))),
+                  ],
+                  rows: filtered.map((a) {
+                    final isPresent = a.status.toLowerCase() == 'present';
+                    return DataRow(cells: [
+                      DataCell(Text(a.name,
+                          style: const TextStyle(fontWeight: FontWeight.w500))),
+                      DataCell(Text(a.studentId)),
+                      DataCell(Text(a.program)),
+                      DataCell(Text(a.batch)),
+                      DataCell(Text(a.date)),
+                      DataCell(Text(a.time.split('.').first)),
+                      DataCell(Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isPresent
+                              ? Colors.green.shade100
+                              : Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          a.status,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isPresent ? Colors.green : Colors.red,
                           ),
-                          child: Text(
-                            a.status,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: isPresent ? Colors.green : Colors.red,
-                            ),
-                          ),
-                        )),
-                      ]);
-                    }).toList(),
-                  ),
+                        ),
+                      )),
+                    ]);
+                  }).toList(),
                 ),
               ),
             ),

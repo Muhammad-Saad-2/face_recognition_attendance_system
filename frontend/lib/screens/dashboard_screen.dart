@@ -427,41 +427,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildFilterBar() {
-    return Row(
+    return Wrap(
+      spacing: 16,
+      runSpacing: 12,
       children: [
-        Expanded(
-          child: DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              labelText: 'Filter by Batch',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              isDense: true,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 180),
+          child: IntrinsicWidth(
+            child: DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Filter by Batch',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                isDense: true,
+              ),
+              value: _selectedBatch,
+              items: ['All', ..._availableBatches]
+                  .map((b) => DropdownMenuItem(value: b, child: Text(b)))
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedBatch = val),
             ),
-            value: _selectedBatch,
-            items: ['All', ..._availableBatches]
-                .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                .toList(),
-            onChanged: (val) => setState(() => _selectedBatch = val),
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              labelText: 'Filter by Program',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              isDense: true,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 180),
+          child: IntrinsicWidth(
+            child: DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Filter by Program',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                isDense: true,
+              ),
+              value: _selectedProgram,
+              items: ['All', ..._availablePrograms]
+                  .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedProgram = val),
             ),
-            value: _selectedProgram,
-            items: ['All', ..._availablePrograms]
-                .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                .toList(),
-            onChanged: (val) => setState(() => _selectedProgram = val),
           ),
         ),
       ],

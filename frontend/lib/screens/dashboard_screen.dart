@@ -22,6 +22,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _selectedProgram;
   Set<String> _availableBatches = {};
   Set<String> _availablePrograms = {};
+  // Student counts by program (for pie chart)
+  Map<String, int> _studentsByProgram = {};
 
   @override
   void initState() {
@@ -35,11 +37,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _error = null;
     });
     try {
-      final records = await _api.getAllAttendanceReports();
+      // Fetch both attendance records and full student list in parallel
+      final results = await Future.wait([
+        _api.getAllAttendanceReports(),
+        _api.getStudents(),
+      ]);
+      final records = results[0] as List<Attendance>;
+      final students = results[1];
+
+      // Build program counts and filter options from all registered students
+      final Map<String, int> progCounts = {};
+      final Set<String> batches = {};
+      final Set<String> programs = {};
+      for (final s in students) {
+        final prog = (s['program'] as String?) ?? 'Unknown';
+        final batch = (s['batch'] as String?) ?? 'Unknown';
+        progCounts[prog] = (progCounts[prog] ?? 0) + 1;
+        batches.add(batch);
+        programs.add(prog);
+      }
+
       setState(() {
         _records = records;
-        _availableBatches = records.map((e) => e.batch).toSet();
-        _availablePrograms = records.map((e) => e.program).toSet();
+        _studentsByProgram = progCounts;
+        _availableBatches = batches;
+        _availablePrograms = programs;
         _isLoading = false;
       });
     } catch (e) {
@@ -170,10 +192,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }).toList();
 
     // Stats for charts
-    Map<String, int> programCounts = {};
+    // By Program: use registered student counts (not just attendance)
+    // Apply program filter if set
+    Map<String, int> programCounts = _selectedProgram == null || _selectedProgram == 'All'
+        ? Map.from(_studentsByProgram)
+        : {_selectedProgram!: _studentsByProgram[_selectedProgram!] ?? 0};
+
     Map<String, int> statusCounts = {'Present': 0, 'Absent': 0};
     for (var r in filtered) {
-      programCounts[r.program] = (programCounts[r.program] ?? 0) + 1;
       if (r.status.toLowerCase() == 'present') {
         statusCounts['Present'] = (statusCounts['Present'] ?? 0) + 1;
       } else {

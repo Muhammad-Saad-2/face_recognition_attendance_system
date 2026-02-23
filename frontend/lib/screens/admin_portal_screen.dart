@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/api_service.dart';
 import 'dashboard_screen.dart';
 import 'faculty_management_screen.dart';
@@ -21,10 +20,9 @@ class AdminPortalScreen extends StatefulWidget {
 
 class _AdminPortalScreenState extends State<AdminPortalScreen> {
   int _selectedIndex = 0;
-  
-  // Define screens and destinations dynamically based on permissions
+
   late List<Widget> _screens;
-  late List<NavigationRailDestination> _destinations;
+  late List<_NavItem> _navItems;
 
   @override
   void initState() {
@@ -35,7 +33,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
   void _buildMenu() {
     _screens = [
       const DashboardScreen(),
-      const AttendanceManagementScreen(), // Everyone accesses, but actions restricted
+      const AttendanceManagementScreen(),
       const StudentManagementScreen(),
       const FacultyManagementScreen(),
       const DepartmentManagementScreen(),
@@ -43,180 +41,176 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
       const CourseManagementScreen(),
     ];
 
-    _destinations = [
-      const NavigationRailDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: Text('Dashboard')),
-      const NavigationRailDestination(icon: Icon(Icons.access_time_outlined), selectedIcon: Icon(Icons.access_time_filled), label: Text('Attendance')),
-      const NavigationRailDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: Text('Students')),
-      const NavigationRailDestination(icon: Icon(Icons.school_outlined), selectedIcon: Icon(Icons.school), label: Text('Faculty')),
-      const NavigationRailDestination(icon: Icon(Icons.business_outlined), selectedIcon: Icon(Icons.business), label: Text('Depts')),
-      const NavigationRailDestination(icon: Icon(Icons.layers_outlined), selectedIcon: Icon(Icons.layers), label: Text('Programs')),
-      const NavigationRailDestination(icon: Icon(Icons.book_outlined), selectedIcon: Icon(Icons.book), label: Text('Courses')),
+    _navItems = [
+      _NavItem(icon: Icons.dashboard_outlined, selectedIcon: Icons.dashboard, label: 'Dashboard'),
+      _NavItem(icon: Icons.access_time_outlined, selectedIcon: Icons.access_time_filled, label: 'Attendance'),
+      _NavItem(icon: Icons.people_outline, selectedIcon: Icons.people, label: 'Students'),
+      _NavItem(icon: Icons.school_outlined, selectedIcon: Icons.school, label: 'Faculty'),
+      _NavItem(icon: Icons.business_outlined, selectedIcon: Icons.business, label: 'Depts'),
+      _NavItem(icon: Icons.layers_outlined, selectedIcon: Icons.layers, label: 'Programs'),
+      _NavItem(icon: Icons.book_outlined, selectedIcon: Icons.book, label: 'Courses'),
     ];
 
     if (ApiService.hasPermission('can_manage_students')) {
-       _screens.add(const RegistrationScreen());
-       _destinations.add(const NavigationRailDestination(
-         icon: Icon(Icons.person_add_outlined), 
-         selectedIcon: Icon(Icons.person_add), 
-         label: Text('Register')
-       ));
+      _screens.add(const RegistrationScreen());
+      _navItems.add(_NavItem(icon: Icons.person_add_outlined, selectedIcon: Icons.person_add, label: 'Register'));
     }
 
     if (ApiService.isSuperAdmin) {
       _screens.add(const ManageAdminsScreen());
-      _destinations.add(const NavigationRailDestination(
-        icon: Icon(Icons.admin_panel_settings_outlined), 
-        selectedIcon: Icon(Icons.admin_panel_settings), 
-        label: Text('Admins')
-      ));
+      _navItems.add(_NavItem(icon: Icons.admin_panel_settings_outlined, selectedIcon: Icons.admin_panel_settings, label: 'Admins'));
     }
   }
 
   void _logout() {
-    ApiService.setToken(''); // Clear token (mock)
+    ApiService.setToken('');
     Navigator.pushReplacement(
-      context, 
-      MaterialPageRoute(builder: (_) => const LoginScreen())
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildHeader(bool isMobile) {
     final user = ApiService.currentUser;
     final userName = user?['full_name'] ?? user?['username'] ?? 'Admin';
 
-    return Scaffold(
-      body: Column(
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 24,
+        vertical: isMobile ? 10 : 14,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade300, width: 1)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Header - Light theme with user info on right (responsive)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < 600;
-              
-              return Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 12 : 24,
-                  vertical: isMobile ? 12 : 16,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+          Flexible(
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: isMobile ? 14 : 16,
+                    backgroundColor: Colors.blueAccent.shade100,
+                    child: Icon(Icons.person, color: Colors.blueAccent.shade700, size: isMobile ? 16 : 18),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // User info on the right
+                  if (!isMobile) ...[
+                    const SizedBox(width: 12),
                     Flexible(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 8 : 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircleAvatar(
-                              radius: isMobile ? 14 : 16,
-                              backgroundColor: Colors.blueAccent.shade100,
-                              child: Icon(
-                                Icons.person,
-                                color: Colors.blueAccent.shade700,
-                                size: isMobile ? 16 : 18,
-                              ),
-                            ),
-                            if (!isMobile) const SizedBox(width: 12),
-                            if (!isMobile)
-                              Flexible(
-                                child: Text(
-                                  userName,
-                                  style: TextStyle(
-                                    color: Colors.grey.shade800,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            SizedBox(width: isMobile ? 8 : 16),
-                            if (!isMobile)
-                              Container(
-                                height: 24,
-                                width: 1,
-                                color: Colors.grey.shade300,
-                              ),
-                            if (!isMobile) const SizedBox(width: 8),
-                            // Logout button
-                            isMobile
-                                ? IconButton(
-                                    onPressed: _logout,
-                                    icon: Icon(
-                                      Icons.logout,
-                                      color: Colors.red.shade700,
-                                      size: 20,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  )
-                                : TextButton.icon(
-                                    onPressed: _logout,
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.red.shade700,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8,
-                                      ),
-                                    ),
-                                    icon: const Icon(Icons.logout, size: 18),
-                                    label: const Text(
-                                      'Logout',
-                                      style: TextStyle(fontSize: 14),
-                                    ),
-                                  ),
-                          ],
-                        ),
+                      child: Text(
+                        userName,
+                        style: TextStyle(color: Colors.grey.shade800, fontSize: 15, fontWeight: FontWeight.w500),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 16),
+                    Container(height: 24, width: 1, color: Colors.grey.shade300),
+                    const SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: _logout,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red.shade700,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      icon: const Icon(Icons.logout, size: 18),
+                      label: const Text('Logout', style: TextStyle(fontSize: 14)),
+                    ),
+                  ] else ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: _logout,
+                      icon: Icon(Icons.logout, color: Colors.red.shade700, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                   ],
-                ),
-              );
-            },
-          ),
-          
-          // Main Content
-          Expanded(
-            child: Row(
-              children: [
-                NavigationRail(
-                  extended: MediaQuery.of(context).size.width > 900,
-                  destinations: _destinations,
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: (idx) {
-                    setState(() {
-                      _selectedIndex = idx;
-                    });
-                  },
-                ),
-                const VerticalDivider(thickness: 1, width: 1),
-                Expanded(child: _screens[_selectedIndex]),
-              ],
+                ],
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 768;
+
+        if (isMobile) {
+          // ── Mobile layout: BottomNavigationBar ──
+          return Scaffold(
+            body: Column(
+              children: [
+                _buildHeader(true),
+                Expanded(child: _screens[_selectedIndex]),
+              ],
+            ),
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (idx) => setState(() => _selectedIndex = idx),
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: Colors.indigo,
+              unselectedItemColor: Colors.grey,
+              selectedFontSize: 10,
+              unselectedFontSize: 10,
+              iconSize: 22,
+              items: _navItems.map((item) => BottomNavigationBarItem(
+                icon: Icon(item.icon),
+                activeIcon: Icon(item.selectedIcon),
+                label: item.label,
+              )).toList(),
+            ),
+          );
+        }
+
+        // ── Desktop/Tablet layout: NavigationRail ──
+        return Scaffold(
+          body: Column(
+            children: [
+              _buildHeader(false),
+              Expanded(
+                child: Row(
+                  children: [
+                    NavigationRail(
+                      extended: constraints.maxWidth > 1100,
+                      destinations: _navItems.map((item) => NavigationRailDestination(
+                        icon: Icon(item.icon),
+                        selectedIcon: Icon(item.selectedIcon),
+                        label: Text(item.label),
+                      )).toList(),
+                      selectedIndex: _selectedIndex,
+                      onDestinationSelected: (idx) => setState(() => _selectedIndex = idx),
+                    ),
+                    const VerticalDivider(thickness: 1, width: 1),
+                    Expanded(child: _screens[_selectedIndex]),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _NavItem {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  const _NavItem({required this.icon, required this.selectedIcon, required this.label});
 }

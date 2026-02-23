@@ -52,16 +52,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Shared chart dashboard for both web (MIS) and Android (Recent Activity)
-    // Web: embedded in NavigationRail layout (no Scaffold needed)
-    // Android: wrapped in Scaffold with AppBar
-    final content = _buildDashboardContent();
     if (kIsWeb) {
-      return content;
+      // Web MIS: full chart dashboard (no Scaffold, embedded in NavigationRail)
+      return _buildDashboardContent();
     } else {
+      // Android: simple attendance card list
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Attendance Dashboard'),
+          title: const Text('Recent Activity'),
           actions: [
             IconButton(
                 icon: const Icon(Icons.refresh),
@@ -69,9 +67,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 tooltip: 'Refresh'),
           ],
         ),
-        body: content,
+        body: RefreshIndicator(
+          onRefresh: _fetchRecords,
+          child: _buildMobileBody(),
+        ),
       );
     }
+  }
+
+  Widget _buildMobileBody() {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) return _buildError();
+    if (_records.isEmpty) {
+      return ListView(children: const [
+        SizedBox(height: 160),
+        Center(
+          child: Column(children: [
+            Icon(Icons.history, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No attendance records yet.',
+                style: TextStyle(fontSize: 18, color: Colors.grey)),
+            SizedBox(height: 8),
+            Text(
+              'Mark attendance using the camera to see activity here.',
+              style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ]),
+        ),
+      ]);
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: _records.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) => _AttendanceCard(record: _records[index]),
+    );
   }
 
   // ──────────────────────────────────────────────
@@ -257,11 +288,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: double.infinity),
-                child: DataTable(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                    child: DataTable(
                   headingRowColor:
                       MaterialStateProperty.all(Colors.grey[100]),
                   columnSpacing: 40,
@@ -318,8 +351,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       )),
                     ]);
                   }).toList(),
-                ),
-              ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -347,6 +382,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 16),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(value,
                       style: TextStyle(

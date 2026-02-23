@@ -20,9 +20,13 @@ class AdminPortalScreen extends StatefulWidget {
 
 class _AdminPortalScreenState extends State<AdminPortalScreen> {
   int _selectedIndex = 0;
+  int _mobileSelectedIndex = 0;
 
-  late List<Widget> _screens;
-  late List<_NavItem> _navItems;
+  // Desktop screens include the Dashboard tab; mobile does not.
+  late List<Widget> _desktopScreens;
+  late List<_NavItem> _desktopNavItems;
+  late List<Widget> _mobileScreens;
+  late List<_NavItem> _mobileNavItems;
 
   @override
   void initState() {
@@ -31,7 +35,8 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
   }
 
   void _buildMenu() {
-    _screens = [
+    // ── Desktop (web MIS) — includes Dashboard ──
+    _desktopScreens = [
       const DashboardScreen(),
       const AttendanceManagementScreen(),
       const StudentManagementScreen(),
@@ -40,8 +45,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
       const ProgramManagementScreen(),
       const CourseManagementScreen(),
     ];
-
-    _navItems = [
+    _desktopNavItems = [
       _NavItem(icon: Icons.dashboard_outlined, selectedIcon: Icons.dashboard, label: 'Dashboard'),
       _NavItem(icon: Icons.access_time_outlined, selectedIcon: Icons.access_time_filled, label: 'Attendance'),
       _NavItem(icon: Icons.people_outline, selectedIcon: Icons.people, label: 'Students'),
@@ -51,14 +55,40 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
       _NavItem(icon: Icons.book_outlined, selectedIcon: Icons.book, label: 'Courses'),
     ];
 
+    // ── Mobile (Android) — NO Dashboard tab ──
+    _mobileScreens = [
+      const AttendanceManagementScreen(),
+      const StudentManagementScreen(),
+      const FacultyManagementScreen(),
+      const DepartmentManagementScreen(),
+      const ProgramManagementScreen(),
+      const CourseManagementScreen(),
+    ];
+    _mobileNavItems = [
+      _NavItem(icon: Icons.access_time_outlined, selectedIcon: Icons.access_time_filled, label: 'Attendance'),
+      _NavItem(icon: Icons.people_outline, selectedIcon: Icons.people, label: 'Students'),
+      _NavItem(icon: Icons.school_outlined, selectedIcon: Icons.school, label: 'Faculty'),
+      _NavItem(icon: Icons.business_outlined, selectedIcon: Icons.business, label: 'Depts'),
+      _NavItem(icon: Icons.layers_outlined, selectedIcon: Icons.layers, label: 'Programs'),
+      _NavItem(icon: Icons.book_outlined, selectedIcon: Icons.book, label: 'Courses'),
+    ];
+
     if (ApiService.hasPermission('can_manage_students')) {
-      _screens.add(const RegistrationScreen());
-      _navItems.add(_NavItem(icon: Icons.person_add_outlined, selectedIcon: Icons.person_add, label: 'Register'));
+      final screen = const RegistrationScreen();
+      final item = _NavItem(icon: Icons.person_add_outlined, selectedIcon: Icons.person_add, label: 'Register');
+      _desktopScreens.add(screen);
+      _desktopNavItems.add(item);
+      _mobileScreens.add(screen);
+      _mobileNavItems.add(item);
     }
 
     if (ApiService.isSuperAdmin) {
-      _screens.add(const ManageAdminsScreen());
-      _navItems.add(_NavItem(icon: Icons.admin_panel_settings_outlined, selectedIcon: Icons.admin_panel_settings, label: 'Admins'));
+      final screen = const ManageAdminsScreen();
+      final item = _NavItem(icon: Icons.admin_panel_settings_outlined, selectedIcon: Icons.admin_panel_settings, label: 'Admins');
+      _desktopScreens.add(screen);
+      _desktopNavItems.add(item);
+      _mobileScreens.add(screen);
+      _mobileNavItems.add(item);
     }
   }
 
@@ -151,24 +181,24 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
         final isMobile = constraints.maxWidth < 768;
 
         if (isMobile) {
-          // ── Mobile layout: BottomNavigationBar ──
+          // ── Mobile layout: BottomNavigationBar (no Dashboard tab) ──
           return Scaffold(
             body: Column(
               children: [
                 _buildHeader(true),
-                Expanded(child: _screens[_selectedIndex]),
+                Expanded(child: _mobileScreens[_mobileSelectedIndex]),
               ],
             ),
             bottomNavigationBar: BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: (idx) => setState(() => _selectedIndex = idx),
+              currentIndex: _mobileSelectedIndex,
+              onTap: (idx) => setState(() => _mobileSelectedIndex = idx),
               type: BottomNavigationBarType.fixed,
               selectedItemColor: Colors.indigo,
               unselectedItemColor: Colors.grey,
               selectedFontSize: 10,
               unselectedFontSize: 10,
               iconSize: 22,
-              items: _navItems.map((item) => BottomNavigationBarItem(
+              items: _mobileNavItems.map((item) => BottomNavigationBarItem(
                 icon: Icon(item.icon),
                 activeIcon: Icon(item.selectedIcon),
                 label: item.label,
@@ -177,7 +207,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
           );
         }
 
-        // ── Desktop/Tablet layout: NavigationRail ──
+        // ── Desktop/Tablet layout: NavigationRail (with Dashboard tab) ──
         return Scaffold(
           body: Column(
             children: [
@@ -187,7 +217,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                   children: [
                     NavigationRail(
                       extended: constraints.maxWidth > 1100,
-                      destinations: _navItems.map((item) => NavigationRailDestination(
+                      destinations: _desktopNavItems.map((item) => NavigationRailDestination(
                         icon: Icon(item.icon),
                         selectedIcon: Icon(item.selectedIcon),
                         label: Text(item.label),
@@ -196,7 +226,7 @@ class _AdminPortalScreenState extends State<AdminPortalScreen> {
                       onDestinationSelected: (idx) => setState(() => _selectedIndex = idx),
                     ),
                     const VerticalDivider(thickness: 1, width: 1),
-                    Expanded(child: _screens[_selectedIndex]),
+                    Expanded(child: _desktopScreens[_selectedIndex]),
                   ],
                 ),
               ),
